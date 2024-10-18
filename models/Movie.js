@@ -15,7 +15,16 @@ const movieSchema = new mongoose.Schema(
 			type: String,
 			required: [true, 'Please add a movie img'],
 			trim: true
-		}
+		},
+		description: {
+			type: String,
+			required: [true, 'Please add a movie description'],
+			trim: true
+		},
+		length: {
+			type: Number,
+			required: [true, 'Please add a movie price']
+		},
 	},
 	{ timestamps: true }
 )
