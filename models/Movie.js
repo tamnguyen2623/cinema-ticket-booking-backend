@@ -16,6 +16,11 @@ const movieSchema = new mongoose.Schema(
 			required: [true, 'Please add a movie img'],
 			trim: true
 		},
+		trailer: {
+			type: String,
+			required: [true, 'Please add a movie img'],
+			trim: true
+		},
 		description: {
 			type: String,
 			required: [true, 'Please add a movie description'],
