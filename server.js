@@ -13,32 +13,35 @@ const cinema = require('./routes/cinema')
 const theater = require('./routes/theater')
 const movie = require('./routes/movie')
 const showtime = require('./routes/showtime')
+const order = require('./routes/order')
 
-mongoose.set('strictQuery', false)
+
+mongoose.set("strictQuery", false);
 mongoose
-	.connect(process.env.DATABASE, { autoIndex: true })
-	.then(() => {
-		console.log('mongoose connected!')
-	})
-	.catch((err) => console.log(err))
+  .connect(process.env.DATABASE, { autoIndex: true })
+  .then(() => {
+    console.log("mongoose connected!");
+  })
+  .catch((err) => console.log(err));
 
-const app = express()
+const app = express();
 
-app.use(express.json())
-app.use(cookieParser())
-app.use(morgan('dev'))
-app.use(express.urlencoded({ extended: true }))
-app.use(cors({ origin: true, credentials: true }))
-app.use(mongoSanitize())
-app.use(helmet())
-app.use(xss())
+app.use(express.json());
+app.use(cookieParser());
+app.use(morgan("dev"));
+app.use(express.urlencoded({ extended: true }));
+app.use(cors({ origin: true, credentials: true }));
+app.use(mongoSanitize());
+app.use(helmet());
+app.use(xss());
 
-app.use('/auth', auth)
-app.use('/cinema', cinema)
-app.use('/theater', theater)
-app.use('/movie', movie)
-app.use('/showtime', showtime)
+app.use("/auth", auth);
+app.use("/cinema", cinema);
+app.use("/theater", theater);
+app.use("/movie", movie);
+app.use("/showtime", showtime);
+app.use("", order);
+app.set('trust proxy', true);
+const port = process.env.PORT || 8080;
 
-const port = process.env.PORT || 8080
-
-app.listen(port, () => console.log(`start server in port ${port}`))
+app.listen(port, () => console.log(`start server in port ${port}`));
