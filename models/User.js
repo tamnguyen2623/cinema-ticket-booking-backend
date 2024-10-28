@@ -20,7 +20,7 @@ const userSchema = new mongoose.Schema({
 	role: {
 		type: String,
 		enum: ['user', 'admin'],
-		defalut: 'user'
+		default: 'user'
 	},
 	password: {
 		type: String,
@@ -36,7 +36,10 @@ const userSchema = new mongoose.Schema({
 					row: { type: String },
 					number: { type: Number }
 				}
-			]
+			],
+			price: Number,
+			qr: String,
+			ticketId: String,
 		}
 	],
 	createdAt: {
