@@ -1,7 +1,6 @@
 const s3 = require('./awsConfig');
-const fs = require('fs');  // Needed for reading file streams
+const fs = require('fs');
 
-// Helper function for multipart upload
 const uploadFileToS3 = (file, key) => {
   const params = {
     Bucket: process.env.S3_BUCKET_NAME,
@@ -25,7 +24,6 @@ const uploadFileToS3 = (file, key) => {
   });
 };
 
-// Function to handle multiple file uploads
 const uploadMultipleFiles = async (files) => {
 
   for (const file of files) {
@@ -34,7 +32,7 @@ const uploadMultipleFiles = async (files) => {
 
     try {
       const uploadedFile = await uploadFileToS3(fileStream, fileName);
-      uploadedFiles[file.fieldname] = uploadedFile.Location;  // Save file URL by fieldname
+      uploadedFiles[file.fieldname] = uploadedFile.Location; 
     } catch (error) {
       console.error('Error during file upload:', error);
       throw error;

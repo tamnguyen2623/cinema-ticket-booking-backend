@@ -1,4 +1,6 @@
 const express = require('express')
+const passport = require("passport");
+require("./config/passportConfig")
 const cors = require('cors')
 const cookieParser = require('cookie-parser')
 const morgan = require('morgan')
@@ -14,6 +16,7 @@ const theater = require('./routes/theater')
 const movie = require('./routes/movie')
 const showtime = require('./routes/showtime')
 const order = require('./routes/order')
+const oauth2 = require('./routes/oauth2')
 
 
 mongoose.set("strictQuery", false);
@@ -41,7 +44,10 @@ app.use("/theater", theater);
 app.use("/movie", movie);
 app.use("/showtime", showtime);
 app.use("", order);
+app.use("", oauth2);
 app.set('trust proxy', true);
+
+app.use(passport.initialize());
 const port = process.env.PORT || 8080;
 
 app.listen(port, () => console.log(`start server in port ${port}`));
