@@ -1,8 +1,8 @@
 const { VNPay, ignoreLogger } = require('vnpay');
 
 exports.vnpay = new VNPay({
-    tmnCode: 'DCSXS1YG',
-    secureSecret: 'YCLMRMAZSBZNPREJENLAJXWDVPIHQDRO',
+    tmnCode: process.env.VNPAY_TMN_CODE,
+    secureSecret: process.env.VNPAY_SECURE_SECRET,
     vnpayHost: 'https://sandbox.vnpayment.vn',
     testMode: true, // tùy chọn, ghi đè vnpayHost thành sandbox nếu là true
     hashAlgorithm: 'SHA512', // tùy chọn
