@@ -46,12 +46,11 @@ exports.register = async (req, res, next) => {
 
 exports.countUsers = async (req, res, next) => {
   try{
-    const numberOfUsers = await User.count();
+    const numberOfUsers = await User.count({role: "user"});
+    console.log(numberOfUsers)
     res.status(200).json({
       success: true,
-      data: {
-        totalUsers: numberOfUsers,
-      }
+      data: numberOfUsers
     });
   } catch (err) {
     res.status(400).json({ success: false, message: err });
