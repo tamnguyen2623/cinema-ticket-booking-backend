@@ -16,9 +16,9 @@ const orderSchema = new mongoose.Schema(
       default: "VnPay",
     },
     status: {
-        type: String,
-        enum: ['done', 'pending', 'deleted'],
-		default: 'pending'
+      type: String,
+      enum: ["done", "pending", "cancelled"],
+      default: "pending",
     },
   },
   { timestamps: true }
