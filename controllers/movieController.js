@@ -16,6 +16,16 @@ exports.getMovies = async (req, res, next) => {
     res.status(400).json({ success: false, message: err });
   }
 };
+exports.countMovies = async (req, res, next) => {
+  try {
+    const numberOfMovies = await Movie.count();
+    res.status(200).json({ success: true, data: {
+      totalMovies: numberOfMovies
+    } });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err });
+  }
+};
 
 //@desc     GET showing movies
 //@route    GET /movie/showing
