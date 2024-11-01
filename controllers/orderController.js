@@ -383,27 +383,80 @@ exports.exportOrdersToExcelFile = async (req, res) => {
 
 exports.countOrders = async (req, res, next) => {
   try {
-    const numberOfOrders = await Order.count();
-    res.status(200).json({ success: true, data: {
-      totalOrders: numberOfOrders
-    } });
+    const numberOfOrders = await Order.count({ status: "done" });
+    res.status(200).json({
+      success: true,
+      data: {
+        totalOrders: numberOfOrders,
+      },
+    });
   } catch (err) {
     res.status(400).json({ success: false, message: err });
   }
 };
 
 exports.totalRevenue = async (req, res, next) => {
-  try{
-    const orders = await User.find({status: "done"});
+  try {
+    const orders = await Order.find({ status: "done" });
     let totalRevenue = 0;
-    orders.forEach(order=>totalRevenue+=order.price)
+    orders.forEach((order) => (totalRevenue = totalRevenue + order.price));
+    console.log(orders);
+    console.log(totalRevenue);
     res.status(200).json({
       success: true,
       data: {
         totalRevenue: totalRevenue,
-      }
+      },
     });
   } catch (err) {
     res.status(400).json({ success: false, message: err });
   }
-}
+};
+
+exports.countOrdersByCinema = async (req, res, next) => {
+  const status = "done";
+  const results = await Order.aggregate([
+    { $match: { status: { $eq: status } } },
+    {
+      $lookup: {
+        from: "showtimes",
+        localField: "showtime",
+        foreignField: "_id",
+        as: "showtimeDetails",
+      },
+    },
+    { $unwind: "$showtimeDetails" },
+    {
+      $lookup: {
+        from: "theaters",
+        localField: "showtimeDetails.theater",
+        foreignField: "_id",
+        as: "theaterDetails",
+      },
+    },
+    { $unwind: "$theaterDetails" },
+    {
+      $lookup: {
+        from: "cinemas",
+        localField: "theaterDetails.cinema",
+        foreignField: "_id",
+        as: "cinemaDetails",
+      },
+    },
+    { $unwind: "$cinemaDetails" },
+    {
+      $group: {
+        _id: "$cinemaDetails.name",
+        count: { $sum: 1 },
+      },
+    },
+    {
+      $project: {
+        label: "$_id",
+        value: "$count",
+      },
+    },
+  ]);
+
+  res.json(results);
+};
