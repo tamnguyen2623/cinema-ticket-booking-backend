@@ -1,26 +1,62 @@
-const mongoose = require("mongoose");
 const User = require("../models/User");
+const bcrypt = require("bcryptjs");
+require("dotenv").config();
 
 //@desc    Register user
 //@route   POST /auth/register
 //@access  Public
 exports.register = async (req, res, next) => {
   try {
-    const { username, email, password, role = "user" } = req.body;
-
-    //Create user
-    const user = await User.create({
-      username,
-      email,
-      password,
-      role,
-    });
-
-    sendTokenResponse(user, 200, res);
+    const { username, email, fullname, password, role = "user" } = req.body;
+    let user;
+    const foundUserByUsername = await User.findOne({ username: username });
+    const foundUserByEmail = await User.findOne({ email: email });
+    console.log(foundUserByUsername);
+    if (foundUserByUsername != null) {
+      res.json({
+        success: false,
+        message: "Username already exist!",
+        code: "10001",
+      });
+    } else if (foundUserByUsername == null && foundUserByEmail != null) {
+      const salt = await bcrypt.genSalt(10);
+      const hashPassword = await bcrypt.hash(password, salt);
+      user = await User.findOneAndUpdate(
+        { email: email },
+        {
+          $set: { username: username, fullname: fullname, password: hashPassword },
+        },
+        { new: true, upsert: false }
+      );
+      sendTokenResponse(user, 200, res);
+    } else if (foundUserByEmail != null && !foundUserByUsername != null) {
+      user = await User.create({
+        username,
+        email,
+        fullname,
+        password,
+        role,
+      });
+      sendTokenResponse(user, 200, res);
+    }
   } catch (err) {
     res.status(400).json({ success: false, message: err });
   }
 };
+
+exports.countUsers = async (req, res, next) => {
+  try{
+    const numberOfUsers = await User.count();
+    res.status(200).json({
+      success: true,
+      data: {
+        totalUsers: numberOfUsers,
+      }
+    });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err });
+  }
+}
 
 //@desc		Login user
 //@route	POST /auth/login
@@ -205,7 +241,7 @@ exports.getQROfTicket = async (req, res, next) => {
     const user = await User.findById(req.user.id);
     const ticket = user.tickets.find((ticket) => {
       return ticket._id.toString() === req.params.id;
-	});
+    });
     if (!ticket) {
       return res
         .status(404)
@@ -214,5 +250,31 @@ exports.getQROfTicket = async (req, res, next) => {
     res.json({ qr: ticket.qr });
   } catch (err) {
     res.status(400).json({ success: false, message: err });
+  }
+};
+
+exports.googleCallback = async (req, res) => {
+  try {
+    const user = req.user;
+
+    if (!user) {
+      return res
+        .status(400)
+        .json({ success: false, message: "User not authenticated" });
+    }
+
+    const token = user.getSignedJwtToken();
+
+    res.cookie("token", token, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Lax",
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+
+    res.redirect("http://localhost:5173/login");
+  } catch (error) {
+    console.error("Error in Google callback:", error);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
