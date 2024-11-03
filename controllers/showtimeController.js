@@ -5,9 +5,6 @@ const User = require("../models/User");
 const Order = require("../models/Order");
 const { orderByVnPay } = require("./orderController");
 
-//@desc     GET showtimes
-//@route    GET /showtime
-//@access   Public
 exports.getShowtimes = async (req, res, next) => {
   try {
     const showtimes = await Showtime.find({ isRelease: true })
@@ -30,9 +27,6 @@ exports.getShowtimes = async (req, res, next) => {
   }
 };
 
-//@desc     GET showtimes with all unreleased showtime
-//@route    GET /showtime/unreleased
-//@access   Private admin
 exports.getUnreleasedShowtimes = async (req, res, next) => {
   try {
     const showtimes = await Showtime.find()
@@ -55,9 +49,6 @@ exports.getUnreleasedShowtimes = async (req, res, next) => {
   }
 };
 
-//@desc     GET single showtime
-//@route    GET /showtime/:id
-//@access   Public
 exports.getShowtime = async (req, res, next) => {
   try {
     const showtime = await Showtime.findById(req.params.id)
@@ -93,9 +84,6 @@ exports.getShowtime = async (req, res, next) => {
   }
 };
 
-//@desc     GET single showtime with user
-//@route    GET /showtime/user/:id
-//@access   Private Admin
 exports.getShowtimeWithUser = async (req, res, next) => {
   try {
     const showtime = await Showtime.findById(req.params.id).populate([
@@ -127,9 +115,6 @@ exports.getShowtimeWithUser = async (req, res, next) => {
   }
 };
 
-//@desc     Add Showtime
-//@route    POST /showtime
-//@access   Private
 exports.addShowtime = async (req, res, next) => {
   try {
     const {
@@ -201,9 +186,6 @@ exports.addShowtime = async (req, res, next) => {
   }
 };
 
-//@desc     Purchase seats
-//@route    POST /showtime/:id
-//@access   Private
 exports.purchase = async (req, res, next) => {
   try {
     const { seats } = req.body;
@@ -274,14 +256,6 @@ exports.purchase = async (req, res, next) => {
 
     const url = await orderByVnPay(order, req);
 
-    // const updatedUser = await User.findByIdAndUpdate(
-    // 	user._id,
-    // 	{
-    // 		$push: { tickets: { showtime, seats: seatUpdates, price: req.body.price} }
-    // 	},
-    // 	{ new: true }
-    // )
-
     res.status(200).json({ success: true, data: updatedShowtime, url });
   } catch (err) {
     console.log(err);
@@ -289,9 +263,6 @@ exports.purchase = async (req, res, next) => {
   }
 };
 
-//@desc     Update showtime
-//@route    PUT /showtime/:id
-//@access   Private Admin
 exports.updateShowtime = async (req, res, next) => {
   try {
     const showtime = await Showtime.findByIdAndUpdate(req.params.id, req.body, {
@@ -313,9 +284,6 @@ exports.updateShowtime = async (req, res, next) => {
   }
 };
 
-//@desc     Delete single showtime
-//@route    DELETE /showtime/:id
-//@access   Private Admin
 exports.deleteShowtime = async (req, res, next) => {
   try {
     const showtime = await Showtime.findById(req.params.id);
@@ -338,9 +306,6 @@ exports.deleteShowtime = async (req, res, next) => {
   }
 };
 
-//@desc     Delete showtimes
-//@route    DELETE /showtime
-//@access   Private Admin
 exports.deleteShowtimes = async (req, res, next) => {
   try {
     const { ids } = req.body;
@@ -366,9 +331,6 @@ exports.deleteShowtimes = async (req, res, next) => {
   }
 };
 
-//@desc     Delete previous day showtime
-//@route    DELETE /showtime/previous
-//@access   Private Admin
 exports.deletePreviousShowtime = async (req, res, next) => {
   try {
     const currentDate = new Date();

@@ -271,7 +271,7 @@ exports.googleCallback = async (req, res) => {
       maxAge: 24 * 60 * 60 * 1000,
     });
 
-    res.redirect("http://localhost:5173/login");
+    res.redirect(process.env.FRONTEND_PREFIX+"/login");
   } catch (error) {
     console.error("Error in Google callback:", error);
     res.status(500).json({ success: false, message: "Server error" });

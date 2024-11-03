@@ -7,6 +7,7 @@ const QRCode = require("qrcode");
 const { randomUUID } = require("crypto");
 const ExcelJS = require("exceljs");
 const { transporter } = require("../config/mailConfig");
+require('dotenv')
 
 // API xử lý đơn hàng
 exports.orderByVnPay = async (order, req) => {
@@ -23,7 +24,7 @@ exports.orderByVnPay = async (order, req) => {
     vnp_TxnRef: order._id,
     vnp_OrderInfo: "Thanh toan don hang 12345",
     vnp_OrderType: ProductCode.Other,
-    vnp_ReturnUrl: "http://localhost:8080/call-back/vnpay",
+    vnp_ReturnUrl: process.env.BACKEND_PREFIX+"/call-back/vnpay",
     vnp_Locale: VnpLocale.VN, // 'vn' hoặc 'en'
     vnp_CreateDate: dateFormat(new Date()), // tùy chọn, mặc định là hiện tại
     vnp_ExpireDate: dateFormat(expireTime), // tùy chọn
@@ -151,7 +152,7 @@ exports.callBackVnPay = async (req, res, next) => {
     }
 
     const showtime = await Showtime.findById(order.showtime._id);
-    res.redirect(`http://localhost:5173/showtime/${showtime._id}/${code}`);
+    res.redirect(process.env.FRONTEND_PREFIX+`/showtime/${showtime._id}/${code}`);
   } catch (error) {
     console.error("Error in callBackVnPay:", error);
     res.status(500).send("Internal Server Error");

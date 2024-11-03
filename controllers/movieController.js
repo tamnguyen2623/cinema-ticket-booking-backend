@@ -5,9 +5,6 @@ const { uploadMultipleFiles } = require("./fileController");
 
 const upload = multer();
 
-//@desc     GET all movies
-//@route    GET /movie
-//@access   Public
 exports.getMovies = async (req, res, next) => {
   try {
     const movies = await Movie.find().sort({ createdAt: -1 });
@@ -27,16 +24,13 @@ exports.countMovies = async (req, res, next) => {
   }
 };
 
-//@desc     GET showing movies
-//@route    GET /movie/showing
-//@access   Public
 exports.getShowingMovies = async (req, res, next) => {
   try {
     const showingShowtime = await Showtime.aggregate([
       { $match: { showtime: { $gte: new Date() }, isRelease: true } },
       {
         $lookup: {
-          from: "movies", // Replace "movies" with the actual collection name of your movies
+          from: "movies",
           localField: "movie",
           foreignField: "_id",
           as: "movie",
@@ -70,16 +64,13 @@ exports.getShowingMovies = async (req, res, next) => {
   }
 };
 
-//@desc     GET showing movies with all unreleased showtime
-//@route    GET /movie/unreleased/showing
-//@access   Private admin
 exports.getUnreleasedShowingMovies = async (req, res, next) => {
   try {
     const showingShowtime = await Showtime.aggregate([
       { $match: { showtime: { $gte: new Date() }, isRelease: true } },
       {
         $lookup: {
-          from: "movies", // Replace "movies" with the actual collection name of your movies
+          from: "movies",
           localField: "movie",
           foreignField: "_id",
           as: "movie",
@@ -113,9 +104,6 @@ exports.getUnreleasedShowingMovies = async (req, res, next) => {
   }
 };
 
-//@desc     GET single movie
-//@route    GET /movie/:id
-//@access   Public
 exports.getMovie = async (req, res, next) => {
   try {
     const movie = await Movie.findById(req.params.id);
@@ -133,20 +121,6 @@ exports.getMovie = async (req, res, next) => {
   }
 };
 
-//@desc     Create movie
-//@route    POST /movie
-//@access   Private
-// exports.createMovie = async (req, res, next) => {
-// 	try {
-// 		const movie = await Movie.create(req.body)
-// 		res.status(201).json({
-// 			success: true,
-// 			data: movie
-// 		})
-// 	} catch (err) {
-// 		res.status(400).json({ success: false, message: err })
-// 	}
-// }
 
 exports.createMovie = async (req, res, next) => {
   // Use multer to handle file upload from request
@@ -196,9 +170,7 @@ exports.createMovie = async (req, res, next) => {
     }
   });
 };
-//@desc     Update movies
-//@route    PUT /movie/:id
-//@access   Private Admin
+
 exports.updateMovie = async (req, res, next) => {
 	console.log(req.body)
 	console.log(req.files)
@@ -254,9 +226,6 @@ exports.updateMovie = async (req, res, next) => {
   });
 };
 
-//@desc     Delete single movies
-//@route    DELETE /movie/:id
-//@access   Private Admin
 exports.deleteMovie = async (req, res, next) => {
   try {
     const movie = await Movie.findById(req.params.id);

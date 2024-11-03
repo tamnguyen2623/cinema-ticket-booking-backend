@@ -1,9 +1,6 @@
 const Cinema = require('../models/Cinema')
 const Theater = require('../models/Theater')
 
-//@desc     GET all theaters
-//@route    GET /theater
-//@access   Public
 exports.getTheaters = async (req, res, next) => {
 	try {
 		const theaters = await Theater.find()
@@ -24,9 +21,6 @@ exports.getTheaters = async (req, res, next) => {
 	}
 }
 
-//@desc     GET single theater
-//@route    GET /theater/:id
-//@access   Public
 exports.getTheater = async (req, res, next) => {
 	try {
 		const theater = await Theater.findById(req.params.id)
@@ -49,9 +43,6 @@ exports.getTheater = async (req, res, next) => {
 	}
 }
 
-//@desc     GET single theater with all unreleased showtime
-//@route    GET /theater/unreleased/:id
-//@access   Private admin
 exports.getUnreleasedTheater = async (req, res, next) => {
 	try {
 		const theater = await Theater.findById(req.params.id).populate([
@@ -69,9 +60,6 @@ exports.getUnreleasedTheater = async (req, res, next) => {
 	}
 }
 
-//@desc     GET theaters by movie and date
-//@route    GET /theater/movie/:mid/:date/:timezone
-//@access   Public
 exports.getTheaterByMovie = async (req, res, next) => {
 	try {
 		const { mid, date, timezone } = req.params
@@ -112,9 +100,6 @@ exports.getTheaterByMovie = async (req, res, next) => {
 	}
 }
 
-//@desc     GET theaters by movie and date with all unreleased showtime
-//@route    GET /theater/movie/unreleased/:mid/:date/:timezone
-//@access   Private admin
 exports.getUnreleasedTheaterByMovie = async (req, res, next) => {
 	try {
 		const { mid, date, timezone } = req.params
@@ -148,9 +133,6 @@ exports.getUnreleasedTheaterByMovie = async (req, res, next) => {
 	}
 }
 
-//@desc     Create theater
-//@route    POST /theater
-//@access   Private
 exports.createTheater = async (req, res, next) => {
 	try {
 		const { cinema: cinemaId, row, column } = req.body
@@ -184,9 +166,6 @@ exports.createTheater = async (req, res, next) => {
 	}
 }
 
-//@desc     Update theaters
-//@route    PUT /theater/:id
-//@access   Private Admin
 exports.updateTheater = async (req, res, next) => {
 	try {
 		const theater = await Theater.findByIdAndUpdate(req.params.id, req.body, {
@@ -203,9 +182,6 @@ exports.updateTheater = async (req, res, next) => {
 	}
 }
 
-//@desc     Delete single theaters
-//@route    DELETE /theater/:id
-//@access   Private Admin
 exports.deleteTheater = async (req, res, next) => {
 	try {
 		const theater = await Theater.findById(req.params.id)
