@@ -1,5 +1,5 @@
 const express = require('express')
-const { register, login, getMe, getAll, logout, deleteUser, getTickets, updateUser, getQROfTicket, googleCallback, countUsers } = require('../controllers/authController')
+const { register, login, getMe, getAll, logout, deleteUser, getTickets, updateUser, getQROfTicket, googleCallback, countUsers, changePassword, getOtpForgetPassword, verifyOtp } = require('../controllers/authController')
 const passport = require('passport');
 const router = express.Router()
 
@@ -9,6 +9,9 @@ router.post('/register', register)
 router.post('/login', login)
 router.get('/logout', logout)
 router.get('/me', protect, getMe)
+router.post('/change-password', protect, changePassword)
+router.post('/forget-password/getOtp', getOtpForgetPassword);
+router.post('/forget-password/verifyOtp', verifyOtp);
 router.get('/tickets', protect, getTickets)
 router.get('/tickets/qr/:id', protect, getQROfTicket)
 router.put('/user/:id', protect, updateUser)

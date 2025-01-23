@@ -32,6 +32,12 @@ const userSchema = new mongoose.Schema({
 		minlength: 6,
 		select: false
 	},
+	otp: {
+		type: String,
+	},
+	registerCode: {
+		type: String,
+	},
 	tickets: [
 		{
 			showtime: { type: mongoose.Schema.ObjectId, ref: 'Showtime' },

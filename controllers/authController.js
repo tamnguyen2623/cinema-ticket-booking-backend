@@ -1,18 +1,138 @@
+const { transporter } = require("../config/mailConfig");
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 require("dotenv").config();
 
-//@desc    Register user
-//@route   POST /auth/register
-//@access  Public
+function generateRandomString() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+exports.getOtpForgetPassword = async (req, res, next) => {
+  const { email } = req.body;
+  const foundUser = await User.findOne({ email: email });
+  if (foundUser == null) {
+    res.json({ success: false, code: 1010, message: "User not found!" });
+  } else {
+    const otp = generateRandomString();
+    foundUser.otp = otp;
+    await User.findOneAndUpdate(
+      { email: email },
+      { otp: otp },
+      { new: true, upsert: false }
+    );
+    const emailHtml = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+              <h2 style="background-color: #007bff; color: white; padding: 10px;">You have successfully requested renew password!</h2>
+              <p>Dear <strong>${foundUser.fullname}</strong>,</p>
+              <p>You have successfully requested renew password. Here is the OTP:</p>
+              <p>OTP: ${otp}</p>
+              <p style="color: #555;">If you have any question, please contact us.</p>
+            </div>`;
+    await transporter.sendMail({
+      from: '"GROUP01 CI NÊ MA" group01se1709@gmail.com',
+      to: foundUser.email,
+      subject: "OTP For Forget Password Is Ready!",
+      html: emailHtml,
+    });
+
+    res.json({ code: 1000 });
+  }
+};
+
+function generateRandomPassword() {
+  const characters =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let password = "";
+  for (let i = 0; i < 6; i++) {
+    password += characters.charAt(
+      Math.floor(Math.random() * characters.length)
+    );
+  }
+  return password;
+}
+
+exports.verifyOtp = async (req, res, next) => {
+  try {
+    const { email, otp } = req.body;
+    const user = await User.findOne({ email });
+    console.log("OTP:" + user.otp);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, code: 1012, message: "User not found" });
+    }
+    if (user.otp !== otp) {
+      return res
+        .status(400)
+        .json({ success: false, code: 1011, message: "Invalid OTP" });
+    }
+    const randomPassword = generateRandomPassword();
+    user.password = randomPassword;
+    user.otp = undefined;
+    await user.save();
+    const emailHtml = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+            <h2 style="background-color: #007bff; color: white; padding: 10px;">You have successfully verified the OTP!</h2>
+            <p>Dear <strong>${user.fullname}</strong>,</p>
+            <p>You have successfully verified the OTP. Here is the new password:</p>
+            <p>Username: ${user.username}</p>
+            <p>New password: ${randomPassword}</p>
+            <p style="color: #555;">If you have any question, please contact us.</p>
+          </div>`;
+    await transporter.sendMail({
+      from: '"GROUP01 CI NÊ MA" group01se1709@gmail.com',
+      to: user.email,
+      subject: "New Password Is Ready!",
+      html: emailHtml,
+    });
+    res.json({
+      success: true,
+      code: 1000,
+      message: "OTP verified successfully",
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+exports.changePassword = async (req, res, next) => {
+  try {
+    const { oldPassword, newPassword, reEnterPassword } = req.body;
+    if (newPassword != reEnterPassword) {
+      res.status(400).json({ success: false, code: 1001 });
+      return;
+    }
+    const user = await User.findById(req.user._id).select("+password");
+    const isMatch = await user.matchPassword(oldPassword);
+    if (!isMatch) {
+      res.status(401).json("Invalid credentials");
+      return;
+    }
+    user.password = newPassword;
+    await user.save();
+    res.json({ code: 1000, data: user });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err });
+  }
+};
+
 exports.register = async (req, res, next) => {
   try {
     const { username, email, fullname, password, role = "user" } = req.body;
     let user;
     const foundUserByUsername = await User.findOne({ username: username });
     const foundUserByEmail = await User.findOne({ email: email });
-    console.log(foundUserByUsername);
-    if (foundUserByUsername != null) {
+    if (foundUserByEmail == null && foundUserByEmail == null) {
+      user = await User.create({
+        username,
+        email,
+        password,
+        fullname,
+        role,
+      });
+
+      sendTokenResponse(user, 200, res);
+    } else if (foundUserByUsername != null) {
       res.json({
         success: false,
         message: "Username already exist!",
@@ -24,19 +144,14 @@ exports.register = async (req, res, next) => {
       user = await User.findOneAndUpdate(
         { email: email },
         {
-          $set: { username: username, fullname: fullname, password: hashPassword },
+          $set: {
+            username: username,
+            fullname: fullname,
+            password: hashPassword,
+          },
         },
         { new: true, upsert: false }
       );
-      sendTokenResponse(user, 200, res);
-    } else if (foundUserByEmail != null && !foundUserByUsername != null) {
-      user = await User.create({
-        username,
-        email,
-        fullname,
-        password,
-        role,
-      });
       sendTokenResponse(user, 200, res);
     }
   } catch (err) {
@@ -45,21 +160,18 @@ exports.register = async (req, res, next) => {
 };
 
 exports.countUsers = async (req, res, next) => {
-  try{
-    const numberOfUsers = await User.count({role: "user"});
-    console.log(numberOfUsers)
+  try {
+    const numberOfUsers = await User.count({ role: "user" });
+    console.log(numberOfUsers);
     res.status(200).json({
       success: true,
-      data: numberOfUsers
+      data: numberOfUsers,
     });
   } catch (err) {
     res.status(400).json({ success: false, message: err });
   }
-}
+};
 
-//@desc		Login user
-//@route	POST /auth/login
-//@access	Public
 exports.login = async (req, res, next) => {
   try {
     const { username, password } = req.body;
@@ -89,7 +201,6 @@ exports.login = async (req, res, next) => {
   }
 };
 
-//Get token from model, create cookie and send response
 const sendTokenResponse = (user, statusCode, res) => {
   //Create token
   const token = user.getSignedJwtToken();
@@ -110,9 +221,6 @@ const sendTokenResponse = (user, statusCode, res) => {
   });
 };
 
-//@desc		Get current Logged in user
-//@route 	POST /auth/me
-//@access	Private
 exports.getMe = async (req, res, next) => {
   try {
     const user = await User.findById(req.user.id);
@@ -125,9 +233,6 @@ exports.getMe = async (req, res, next) => {
   }
 };
 
-//@desc		Get user's tickets
-//@route 	POST /auth/tickets
-//@access	Private
 exports.getTickets = async (req, res, next) => {
   try {
     const user = await User.findById(req.user.id, { tickets: 1 }).populate({
@@ -152,9 +257,6 @@ exports.getTickets = async (req, res, next) => {
   }
 };
 
-//@desc		Log user out / clear cookie
-//@route 	GET /auth/logout
-//@access	Private
 exports.logout = async (req, res, next) => {
   try {
     res.cookie("token", "none", {
@@ -170,9 +272,6 @@ exports.logout = async (req, res, next) => {
   }
 };
 
-//@desc		Get All user
-//@route 	POST /auth/user
-//@access	Private Admin
 exports.getAll = async (req, res, next) => {
   try {
     const user = await User.find().populate({
@@ -197,9 +296,6 @@ exports.getAll = async (req, res, next) => {
   }
 };
 
-//@desc		Delete user
-//@route 	DELETE /auth/user/:id
-//@access	Private Admin
 exports.deleteUser = async (req, res, next) => {
   try {
     const user = await User.findByIdAndDelete(req.params.id);
@@ -213,9 +309,6 @@ exports.deleteUser = async (req, res, next) => {
   }
 };
 
-//@desc     Update user
-//@route    PUT /auth/user/:id
-//@access   Private
 exports.updateUser = async (req, res, next) => {
   try {
     const user = await User.findByIdAndUpdate(req.params.id, req.body, {
@@ -271,7 +364,7 @@ exports.googleCallback = async (req, res) => {
       maxAge: 24 * 60 * 60 * 1000,
     });
 
-    res.redirect(process.env.FRONTEND_PREFIX+"/login");
+    res.redirect(process.env.FRONTEND_PREFIX + "/login");
   } catch (error) {
     console.error("Error in Google callback:", error);
     res.status(500).json({ success: false, message: "Server error" });

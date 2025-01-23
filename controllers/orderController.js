@@ -7,7 +7,7 @@ const QRCode = require("qrcode");
 const { randomUUID } = require("crypto");
 const ExcelJS = require("exceljs");
 const { transporter } = require("../config/mailConfig");
-require('dotenv')
+require("dotenv");
 
 // API xử lý đơn hàng
 exports.orderByVnPay = async (order, req) => {
@@ -24,7 +24,7 @@ exports.orderByVnPay = async (order, req) => {
     vnp_TxnRef: order._id,
     vnp_OrderInfo: "Thanh toan don hang 12345",
     vnp_OrderType: ProductCode.Other,
-    vnp_ReturnUrl: process.env.BACKEND_PREFIX+"/call-back/vnpay",
+    vnp_ReturnUrl: process.env.BACKEND_PREFIX + "/call-back/vnpay",
     vnp_Locale: VnpLocale.VN, // 'vn' hoặc 'en'
     vnp_CreateDate: dateFormat(new Date()), // tùy chọn, mặc định là hiện tại
     vnp_ExpireDate: dateFormat(expireTime), // tùy chọn
@@ -52,6 +52,7 @@ exports.callBackVnPay = async (req, res, next) => {
       .populate({
         path: "user",
       });
+      console.log(order)
     if (!order) {
       return res.status(404).send("Order not found.");
     }
@@ -141,18 +142,17 @@ exports.callBackVnPay = async (req, res, next) => {
             !order.seats.some(
               (orderSeat) =>
                 seat.row === orderSeat.row &&
-                seat.number === orderSeat.number &&
-                seat.user?.toString() === order.user.toString()
+                seat.number === orderSeat.number
             )
         );
-
-        await Order.findByIdAndUpdate(order._id, { status: "cancelled" });
-
         await showtime.save();
+        await Order.findByIdAndUpdate(order._id, { status: "cancelled" });
     }
 
     const showtime = await Showtime.findById(order.showtime._id);
-    res.redirect(process.env.FRONTEND_PREFIX+`/showtime/${showtime._id}/${code}`);
+    res.redirect(
+      process.env.FRONTEND_PREFIX + `/showtime/${showtime._id}/${code}`
+    );
   } catch (error) {
     console.error("Error in callBackVnPay:", error);
     res.status(500).send("Internal Server Error");
