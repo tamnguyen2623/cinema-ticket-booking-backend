@@ -207,8 +207,6 @@ exports.countUsers = async (req, res, next) => {
 exports.login = async (req, res, next) => {
   try {
     const { username, password } = req.body;
-
-    //Validate email & password
     if (!username || !password) {
       return res.status(400).json("Please provide an username and password");
     }
