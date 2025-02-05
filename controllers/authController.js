@@ -116,6 +116,38 @@ exports.changePassword = async (req, res, next) => {
   }
 };
 
+exports.changeUsername = async (req, res, next) => {
+  try {
+    const { newUsername } = req.body;
+    if (!req.user || !req.user._id) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Unauthorized: No user found" });
+    }
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+    const existingUser = await User.findOne({ username: newUsername });
+    if (existingUser) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Username already taken" });
+    }
+
+    user.username = newUsername;
+    await user.save();
+
+    res.json({ success: true, message: "Username updated successfully" });
+  } catch (err) {
+    console.error("Error updating username:", err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 exports.register = async (req, res, next) => {
   try {
     const { username, email, fullname, password, role = "user" } = req.body;
@@ -175,8 +207,6 @@ exports.countUsers = async (req, res, next) => {
 exports.login = async (req, res, next) => {
   try {
     const { username, password } = req.body;
-
-    //Validate email & password
     if (!username || !password) {
       return res.status(400).json("Please provide an username and password");
     }
