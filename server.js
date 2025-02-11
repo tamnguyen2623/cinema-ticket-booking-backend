@@ -21,7 +21,7 @@ const oauth2 = require('./routes/oauth2')
 
 mongoose.set("strictQuery", false);
 mongoose
-  .connect(process.env.DATABASE, { autoIndex: true })
+  .connect(process.env.MONGO_URL)
   .then(() => {
     console.log("mongoose connected!");
   })

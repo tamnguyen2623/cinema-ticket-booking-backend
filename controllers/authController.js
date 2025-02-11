@@ -150,6 +150,7 @@ exports.changeUsername = async (req, res, next) => {
 
 exports.register = async (req, res, next) => {
   try {
+    console.log(req.body);
     const { username, email, fullname, password, role = "user" } = req.body;
     let user;
     const foundUserByUsername = await User.findOne({ username: username });
@@ -187,6 +188,7 @@ exports.register = async (req, res, next) => {
       sendTokenResponse(user, 200, res);
     }
   } catch (err) {
+    console.error("Error registering user:", err);
     res.status(400).json({ success: false, message: err });
   }
 };
@@ -401,3 +403,13 @@ exports.googleCallback = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
+exports.addUser = async (req, res) => {
+  const { username, fullname, password } = req.body;
+  try {
+    const user = await User.create(username, fullname, password);
+    res.status(201).json({ success: true, data: user });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+
+}
