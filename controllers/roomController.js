@@ -3,9 +3,9 @@ const Cinema = require("../models/Cinema");
 const Seat = require("../models/Seat");
 exports.createRoom = async (req, res) => {
   try {
-    const { cinema, roomname, roomtype, seatnumber } = req.body;
+    const { cinema, roomname, roomtype, row, colum } = req.body;
 
-    if (!cinema || !roomname || !roomtype || !seatnumber) {
+    if (!cinema || !roomname || !roomtype || !row || !colum) {
       return res.status(400).json({ message: "All fields are required!" });
     }
 
@@ -18,7 +18,8 @@ exports.createRoom = async (req, res) => {
       cinema,
       roomname,
       roomtype,
-      seatnumber,
+      row,
+      colum,
       seats: [],
     });
 
@@ -61,11 +62,11 @@ exports.getRoomById = async (req, res) => {
 
 exports.updateRoom = async (req, res) => {
   try {
-    const { roomname, roomtype, seatnumber } = req.body;
+    const { roomname, roomtype, row, colum } = req.body;
 
     const updatedRoom = await Room.findByIdAndUpdate(
       req.params.id,
-      { roomname, roomtype, seatnumber },
+      { roomname, roomtype, row, colum },
       { new: true }
     );
 

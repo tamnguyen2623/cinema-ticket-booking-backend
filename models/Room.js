@@ -13,7 +13,11 @@ const roomSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  seatnumber: {
+  row: {
+    type: Number,
+    required: true,
+  },
+  colum: {
     type: Number,
     required: true,
   },
