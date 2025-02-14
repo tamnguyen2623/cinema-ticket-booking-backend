@@ -313,7 +313,7 @@ exports.deleteShowtimes = async (req, res, next) => {
     let showtimesIds;
 
     if (!ids) {
-      // Delete all showtimes
+      // Delete all showtimessea
       showtimesIds = await Showtime.find({}, "_id");
     } else {
       // Find showtimes based on the provided IDs
