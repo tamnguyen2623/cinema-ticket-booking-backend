@@ -18,7 +18,7 @@ const showtime = require("./routes/showtime");
 const order = require("./routes/order");
 const oauth2 = require("./routes/oauth2");
 const room = require("./routes/room");
-
+const ticket = require("./routes/ticket");
 mongoose.set("strictQuery", false);
 mongoose
   .connect(process.env.DATABASE)
@@ -46,7 +46,8 @@ app.use(mongoSanitize());
 app.use(helmet());
 app.use(xss());
 
-app.use("/room", room); 
+app.use("/room", room);
+app.use("/ticket", ticket);
 app.use("/auth", auth);
 app.use("/cinema", cinema);
 app.use("/theater", theater);
