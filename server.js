@@ -22,6 +22,7 @@ const combo = require("./routes/combo");
 const movietype = require("./routes/movietype");
 
 
+const ticket = require("./routes/ticket");
 mongoose.set("strictQuery", false);
 mongoose
   .connect(process.env.DATABASE)
@@ -50,6 +51,7 @@ app.use(helmet());
 app.use(xss());
 
 app.use("/room", room);
+app.use("/ticket", ticket);
 app.use("/auth", auth);
 app.use("/cinema", cinema);
 app.use("/theater", theater);
