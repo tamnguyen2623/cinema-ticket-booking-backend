@@ -18,6 +18,9 @@ const showtime = require("./routes/showtime");
 const order = require("./routes/order");
 const oauth2 = require("./routes/oauth2");
 const room = require("./routes/room");
+const combo = require("./routes/combo");
+const movietype = require("./routes/movietype");
+
 
 mongoose.set("strictQuery", false);
 mongoose
@@ -46,11 +49,13 @@ app.use(mongoSanitize());
 app.use(helmet());
 app.use(xss());
 
-app.use("/room", room); 
+app.use("/room", room);
 app.use("/auth", auth);
 app.use("/cinema", cinema);
 app.use("/theater", theater);
 app.use("/movie", movie);
+app.use("/movietype", movietype);
+app.use("/combo", combo);
 app.use("/showtime", showtime);
 app.use("", order);
 app.use("", oauth2);

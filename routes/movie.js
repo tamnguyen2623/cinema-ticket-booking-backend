@@ -23,4 +23,4 @@ router
 	.put(protect, authorize('admin'), updateMovie)
 	.delete(protect, authorize('admin'), deleteMovie)
 
-module.exports = router
+module.exports = router;
