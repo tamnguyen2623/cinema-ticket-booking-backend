@@ -10,6 +10,10 @@ const comboSchema = new mongoose.Schema(
             type: String,
             required: [true, 'Please add a image'],
         },
+        price: {
+            type: String,
+            required: [true, 'Please add a price'],
+        },
         description: {
             type: String,
             required: [true, 'Please add a description'],
