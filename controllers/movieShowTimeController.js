@@ -162,7 +162,7 @@ exports.getShowTimesBySelection = async (req, res) => {
       date: { $gte: dateStart, $lte: dateEnd },
       cinemaId,
     };
-    
+
     if (movieId) {
       filter.movieId = movieId; // Nếu có movieId thì lọc theo phim
     }
@@ -213,4 +213,3 @@ exports.getShowTimesBySelection = async (req, res) => {
     });
   }
 };
-
