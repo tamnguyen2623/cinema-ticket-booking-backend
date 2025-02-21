@@ -18,7 +18,9 @@ const showtime = require("./routes/showtime");
 const order = require("./routes/order");
 const oauth2 = require("./routes/oauth2");
 const room = require("./routes/room");
-const ticket = require("./routes/ticket");
+const voucher = require("./routes/voucher");
+const movieshowing = require("./routes/movieShowTime");
+
 mongoose.set("strictQuery", false);
 mongoose
   .connect(process.env.DATABASE)
@@ -47,7 +49,6 @@ app.use(helmet());
 app.use(xss());
 
 app.use("/room", room);
-app.use("/ticket", ticket);
 app.use("/auth", auth);
 app.use("/cinema", cinema);
 app.use("/theater", theater);
@@ -56,6 +57,8 @@ app.use("/showtime", showtime);
 app.use("", order);
 app.use("", oauth2);
 app.set("trust proxy", true);
+app.use("/voucher", voucher);
+app.use("/movieshowing", movieshowing);
 
 app.use(passport.initialize());
 const port = process.env.PORT || 8080;
