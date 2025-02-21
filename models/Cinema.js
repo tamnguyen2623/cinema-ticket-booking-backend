@@ -1,29 +1,3 @@
-// const mongoose = require('mongoose')
-
-// const cinemaSchema = new mongoose.Schema(
-// 	{
-// 		name: {
-// 			type: String,
-// 			trim: true,
-// 			unique: true,
-// 			required: [true, 'Please add a name']
-// 		},
-// 		theaters: [{ type: mongoose.Schema.ObjectId, ref: 'Theater' }]
-// 	},
-// 	{ timestamps: true }
-// )
-
-// cinemaSchema.pre('deleteOne', { document: true, query: true }, async function (next) {
-// 	const theaters = await this.model('Theater').find({ _id: { $in: this.theaters } })
-
-// 	for (const theater of theaters) {
-// 		await theater.deleteOne()
-// 	}
-// 	next()
-// })
-
-// module.exports = mongoose.model('Cinema', cinemaSchema)
-
 const mongoose = require("mongoose");
 
 const cinemaSchema = new mongoose.Schema(
@@ -34,15 +8,15 @@ const cinemaSchema = new mongoose.Schema(
       unique: true,
       required: [true, "Please add a name"],
     },
-    theaters: [{ type: mongoose.Schema.ObjectId, ref: "Theater" }],
-    movieId: [{ type: mongoose.Schema.ObjectId, ref: "Movie" }],
-    roomId: [{ type: mongoose.Schema.ObjectId, ref: "Room" }],
     address: {
       type: String,
-      required: true,
+      required: [true, "Please add address"],
+    },
+    isDelete: {
+      type: Boolean,
+      default: false,
     },
   },
-
   { timestamps: true }
 );
 

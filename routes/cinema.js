@@ -1,6 +1,7 @@
 const express = require("express");
 const {
   getCinemas,
+  getListCinemas,
   getCinema,
   createCinema,
   updateCinema,
@@ -13,9 +14,12 @@ const { protect, authorize } = require("../middleware/auth");
 
 router
   .route("/")
+  .get(getListCinemas)
   .get(getCinemas)
-  .post(protect, authorize("admin"), createCinema);
-router.route("/unreleased").get(protect, getUnreleasedCinemas);
+  .post(createCinema);
+router
+  .route("/unreleased")
+  .get(protect, authorize("admin"), getUnreleasedCinemas);
 router
   .route("/:id")
   .get(getCinema)

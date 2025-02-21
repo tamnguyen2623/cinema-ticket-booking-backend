@@ -1,9 +1,10 @@
 const mongoose = require("mongoose");
+
 const seatSchema = new mongoose.Schema({
   name: { type: String },
   type: { type: String },
   isDelete: { type: Boolean },
-  room: { type: mongoose.Schema.Types.ObjectId, ref: "Room" },
+  roomId: { type: mongoose.Schema.Types.ObjectId, ref: "Room" },
 }, {
   timestamps: true,
 });

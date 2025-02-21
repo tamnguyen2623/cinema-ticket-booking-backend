@@ -1,5 +1,19 @@
 const Cinema = require("../models/Cinema");
 
+
+exports.getListCinemas = async (req, res, next) => {
+	try {
+		const cinemas = await Cinema.find({ isDelete: false }) 
+			.collation({ locale: 'en', strength: 2 })
+			.sort({ name: 1 });
+
+		res.status(200).json({ success: true, count: cinemas.length, data: cinemas });
+	} catch (err) {
+		res.status(400).json({ success: false, message: err.message });
+	}
+};
+
+
 //@desc     GET all cinemas
 //@route    GET /cinema
 //@access   Public
@@ -160,8 +174,12 @@ exports.updateCinema = async (req, res, next) => {
 //@route    DELETE /cinema/:id
 //@access   Private Admin
 exports.deleteCinema = async (req, res, next) => {
-  try {
-    const cinema = await Cinema.findById(req.params.id);
+	try {
+		const cinema = await Cinema.findOneAndUpdate(
+			{ _id: req.params.id, isDelete: false },
+			{ isDelete: true },
+			{ new: true }
+		)
 
     if (!cinema) {
       return res.status(400).json({
@@ -170,11 +188,9 @@ exports.deleteCinema = async (req, res, next) => {
       });
     }
 
-    await cinema.deleteOne();
-
-    res.status(200).json({ success: true });
-  } catch (err) {
-    console.log(err);
-    res.status(400).json({ success: false, message: err });
-  }
-};
+		res.status(200).json({ success: true, message: 'Cinema has been soft deleted' })
+	} catch (err) {
+		console.log(err)
+		res.status(400).json({ success: false, message: err })
+	}
+}
