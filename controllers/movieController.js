@@ -16,9 +16,12 @@ exports.getMovies = async (req, res, next) => {
 exports.countMovies = async (req, res, next) => {
   try {
     const numberOfMovies = await Movie.count();
-    res.status(200).json({ success: true, data: {
-      totalMovies: numberOfMovies
-    } });
+    res.status(200).json({
+      success: true,
+      data: {
+        totalMovies: numberOfMovies,
+      },
+    });
   } catch (err) {
     res.status(400).json({ success: false, message: err });
   }
@@ -121,7 +124,6 @@ exports.getMovie = async (req, res, next) => {
   }
 };
 
-
 exports.createMovie = async (req, res, next) => {
   // Use multer to handle file upload from request
   upload.fields([
@@ -172,8 +174,8 @@ exports.createMovie = async (req, res, next) => {
 };
 
 exports.updateMovie = async (req, res, next) => {
-	console.log(req.body)
-	console.log(req.files)
+  console.log(req.body);
+  console.log(req.files);
   upload.fields([
     { name: "img", maxCount: 1 },
     { name: "trailer", maxCount: 1 },
@@ -198,12 +200,14 @@ exports.updateMovie = async (req, res, next) => {
       // Upload files to S3 using multipart upload
       const uploadedFiles = await uploadMultipleFiles(filesToUpload);
       const prevMovie = Movie.findById(req.params.id);
-	  
+
       const movieData = {
         name: req.body.name,
         length: req.body.length,
-        img: uploadedFiles["img"]?uploadedFiles["img"]:prevMovie.img,
-        trailer: uploadedFiles["trailer"]?uploadedFiles["trailer"]:prevMovie.trailer,
+        img: uploadedFiles["img"] ? uploadedFiles["img"] : prevMovie.img,
+        trailer: uploadedFiles["trailer"]
+          ? uploadedFiles["trailer"]
+          : prevMovie.trailer,
         description: req.body.description,
         price: req.body.price,
       };

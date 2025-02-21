@@ -1,5 +1,11 @@
 const mongoose = require("mongoose");
 const seatSchema = new mongoose.Schema({
+  name: { type: String },
+  type: { type: String },
+  isDelete: { type: Boolean },
   room: { type: mongoose.Schema.Types.ObjectId, ref: "Room" },
+}, {
+  timestamps: true,
 });
-const Seat = mongoose.model("Seat", seatSchema);
+
+module.exports = mongoose.model('Seat', seatSchema)

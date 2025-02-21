@@ -18,7 +18,10 @@ const showtime = require("./routes/showtime");
 const order = require("./routes/order");
 const oauth2 = require("./routes/oauth2");
 const room = require("./routes/room");
+const seat = require("./routes/seat");
 const ticket = require("./routes/ticket");
+const movieshowing = require("./routes/movieshowing");
+const booking = require("./routes/booking");
 mongoose.set("strictQuery", false);
 mongoose
   .connect(process.env.DATABASE)
@@ -46,7 +49,10 @@ app.use(mongoSanitize());
 app.use(helmet());
 app.use(xss());
 
+app.use("/booking", booking);
+app.use("/movieshowing", movieshowing);
 app.use("/room", room);
+app.use("/seat", seat);
 app.use("/ticket", ticket);
 app.use("/auth", auth);
 app.use("/cinema", cinema);
