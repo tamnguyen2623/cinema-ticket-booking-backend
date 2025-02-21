@@ -21,8 +21,9 @@ const room = require("./routes/room");
 const seat = require("./routes/seat");
 const ticket = require("./routes/ticket");
 const voucher = require("./routes/voucher");
-const movieshowing = require("./routes/movieShowTime"); 
+const movieshowing = require("./routes/movieShowTime");
 const booking = require("./routes/booking");
+
 mongoose.set("strictQuery", false);
 mongoose
   .connect(process.env.DATABASE)
@@ -64,7 +65,6 @@ app.use("", order);
 app.use("", oauth2);
 app.set("trust proxy", true);
 app.use("/voucher", voucher);
-app.use("/movieshowing", movieshowing);
 
 app.use(passport.initialize());
 const port = process.env.PORT || 8080;
