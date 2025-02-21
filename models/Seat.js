@@ -1,5 +1,12 @@
 const mongoose = require("mongoose");
+
 const seatSchema = new mongoose.Schema({
-  room: { type: mongoose.Schema.Types.ObjectId, ref: "Room" },
+  name: { type: String },
+  type: { type: String },
+  isDelete: { type: Boolean },
+  roomId: { type: mongoose.Schema.Types.ObjectId, ref: "Room" },
+}, {
+  timestamps: true,
 });
-const Seat = mongoose.model("Seat", seatSchema);
+
+module.exports = mongoose.model('Seat', seatSchema)
