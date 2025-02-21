@@ -52,7 +52,7 @@ exports.callBackVnPay = async (req, res, next) => {
       .populate({
         path: "user",
       });
-      console.log(order)
+    console.log(order);
     if (!order) {
       return res.status(404).send("Order not found.");
     }
@@ -141,8 +141,7 @@ exports.callBackVnPay = async (req, res, next) => {
           (seat) =>
             !order.seats.some(
               (orderSeat) =>
-                seat.row === orderSeat.row &&
-                seat.number === orderSeat.number
+                seat.row === orderSeat.row && seat.number === orderSeat.number
             )
         );
         await showtime.save();
@@ -461,3 +460,143 @@ exports.countOrdersByCinema = async (req, res, next) => {
 
   res.json(results);
 };
+
+exports.getTotalRevenueByCinema = async (req, res, next) => {
+  const status = "done";
+  const results = await Order.aggregate([
+    { $match: { status: { $eq: status } } },
+    {
+      $lookup: {
+        from: "showtimes",
+        localField: "showtime",
+        foreignField: "_id",
+        as: "showtimeDetails",
+      },
+    },
+    { $unwind: "$showtimeDetails" },
+    {
+      $lookup: {
+        from: "theaters",
+        localField: "showtimeDetails.theater",
+        foreignField: "_id",
+        as: "theaterDetails",
+      },
+    },
+    { $unwind: "$theaterDetails" },
+    {
+      $lookup: {
+        from: "cinemas",
+        localField: "theaterDetails.cinema",
+        foreignField: "_id",
+        as: "cinemaDetails",
+      },
+    },
+    { $unwind: "$cinemaDetails" },
+    {
+      $group: {
+        _id: "$cinemaDetails.name",
+        totalRevenue: { $sum: "$price" },
+      },
+    },
+    {
+      $project: {
+        label: "$_id",
+        value: "$totalRevenue",
+      },
+    },
+  ]);
+
+  res.json(results);
+};
+
+exports.getTotalRevenueByMonth = async (req, res, next) => {
+  const { year } = req.query;
+  const status = "done";
+
+  if (!year) {
+    return res.status(400).json({ message: "Vui lòng cung cấp năm." });
+  }
+
+  const results = await Order.aggregate([
+    {
+      $match: {
+        status: status,
+        createdAt: {
+          $gte: new Date(`${year}-01-01T00:00:00.000Z`),
+          $lt: new Date(`${year}-12-31T23:59:59.999Z`),
+        },
+      },
+    },
+    {
+      $group: {
+        _id: { month: { $month: "$createdAt" } },
+        totalRevenue: { $sum: "$price" },
+      },
+    },
+    { $sort: { "_id.month": 1 } },
+    {
+      $project: {
+        _id: 0,
+        month: "$_id.month",
+        totalRevenue: 1,
+      },
+    },
+  ]);
+
+  let revenueByMonth = Array(12).fill(0);
+
+  results.forEach((item) => {
+    revenueByMonth[item.month - 1] = item.totalRevenue;
+  });
+
+  res.json(revenueByMonth);
+};
+
+exports.getTotalRevenueByMovie = async (req, res, next) => {
+  const status = "done";
+
+  const results = await Order.aggregate([
+    { 
+      $match: { status: status } 
+    },
+    {
+      $lookup: {
+        from: "showtimes",
+        localField: "showtime",
+        foreignField: "_id",
+        as: "showtimeDetails",
+      },
+    },
+    { $unwind: "$showtimeDetails" },
+    {
+      $lookup: {
+        from: "movies", // Liên kết với bảng Movie
+        localField: "showtimeDetails.movie",
+        foreignField: "_id",
+        as: "movieDetails",
+      },
+    },
+    { $unwind: "$movieDetails" },
+    {
+      $group: {
+        _id: "$movieDetails.name", // Nhóm theo tên phim
+        totalRevenue: { $sum: "$price" }, // Tính tổng doanh thu
+      },
+    },
+    { $sort: { totalRevenue: -1 } }, // Sắp xếp doanh thu giảm dần
+    {
+      $project: {
+        _id: 0,
+        movieName: "$_id", // Đổi tên key cho dễ hiểu
+        totalRevenue: 1,
+      },
+    },
+  ]);
+
+  // Format kết quả thành dạng categories (tên phim) và totalRevenue
+  const categories = results.map(item => item.movieName);
+  const totalRevenue = results.map(item => item.totalRevenue);
+
+  res.json({ categories, totalRevenue });
+};
+
