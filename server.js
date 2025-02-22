@@ -24,6 +24,8 @@ const voucher = require("./routes/voucher");
 const movieshowing = require("./routes/movieShowTime");
 const movietype = require("./routes/movietype");
 const combo = require("./routes/combo");
+const booking = require("./routes/booking");
+const seatAvailable = require("./routes/seatAvailable");
 
 mongoose.set("strictQuery", false);
 mongoose
@@ -52,6 +54,8 @@ app.use(mongoSanitize());
 app.use(helmet());
 app.use(xss());
 
+app.use("/booking", booking);
+app.use("/movieshowing", movieshowing);
 app.use("/room", room);
 app.use("/seat", seat);
 app.use("/ticket", ticket);
@@ -67,7 +71,7 @@ app.use("/voucher", voucher);
 app.use("/movieshowing", movieshowing);
 app.use("/movietype", movietype);
 app.use("/combo", combo);
-
+app.use("/seatAvailable", seatAvailable);
 
 app.use(passport.initialize());
 const port = process.env.PORT || 8080;
