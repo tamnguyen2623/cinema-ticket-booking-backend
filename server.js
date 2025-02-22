@@ -23,6 +23,7 @@ const ticket = require("./routes/ticket");
 const voucher = require("./routes/voucher");
 const movieshowing = require("./routes/movieShowTime");
 const booking = require("./routes/booking");
+const seatAvailable = require("./routes/seatAvailable");
 
 mongoose.set("strictQuery", false);
 mongoose
@@ -65,6 +66,8 @@ app.use("", order);
 app.use("", oauth2);
 app.set("trust proxy", true);
 app.use("/voucher", voucher);
+app.use("/movieshowing", movieshowing);
+app.use("/seatAvailable", seatAvailable);
 
 app.use(passport.initialize());
 const port = process.env.PORT || 8080;
