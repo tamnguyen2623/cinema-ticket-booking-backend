@@ -13,7 +13,6 @@ const { protect, authorize } = require("../middleware/auth");
 router
   .route("/")
   .get(filterMovieShowTimes)
-
   .post(addMovieShowTime);
 
 router.route("/list").get(getShowTimesBySelection);

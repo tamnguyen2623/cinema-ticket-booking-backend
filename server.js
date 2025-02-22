@@ -22,6 +22,8 @@ const seat = require("./routes/seat");
 const ticket = require("./routes/ticket");
 const voucher = require("./routes/voucher");
 const movieshowing = require("./routes/movieShowTime");
+const movietype = require("./routes/movietype");
+const combo = require("./routes/combo");
 const booking = require("./routes/booking");
 const seatAvailable = require("./routes/seatAvailable");
 
@@ -67,6 +69,8 @@ app.use("", oauth2);
 app.set("trust proxy", true);
 app.use("/voucher", voucher);
 app.use("/movieshowing", movieshowing);
+app.use("/movietype", movietype);
+app.use("/combo", combo);
 app.use("/seatAvailable", seatAvailable);
 
 app.use(passport.initialize());
