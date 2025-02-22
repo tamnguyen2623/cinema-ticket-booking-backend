@@ -5,7 +5,7 @@ const router = express.Router()
 
 const { protect, authorize } = require('../middleware/auth');
 
-router.get('/call-back/vnpay', callBackVnPay);
+// router.get('/call-back/vnpay', callBackVnPay);
 router.get('/admin/orders', protect, authorize('admin'), getOrders);
 router.get('/order/export', protect, authorize('admin'), exportOrdersToExcelFile);
 router.get('/order/total', protect, authorize('admin'), countOrders);

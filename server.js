@@ -22,6 +22,7 @@ const seat = require("./routes/seat");
 const ticket = require("./routes/ticket");
 const voucher = require("./routes/voucher");
 const movieshowing = require("./routes/movieShowTime");
+const booking = require("./routes/booking");
 const seatAvailable = require("./routes/seatAvailable");
 
 mongoose.set("strictQuery", false);
@@ -51,6 +52,8 @@ app.use(mongoSanitize());
 app.use(helmet());
 app.use(xss());
 
+app.use("/booking", booking);
+app.use("/movieshowing", movieshowing);
 app.use("/room", room);
 app.use("/seat", seat);
 app.use("/ticket", ticket);

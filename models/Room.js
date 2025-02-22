@@ -37,7 +37,7 @@ const roomSchema = new mongoose.Schema({
   },
   status: {
     type: Boolean,
-    default: false,
+    default: true,
   },
 });
 roomSchema.pre("save", function (next) {

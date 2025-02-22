@@ -234,9 +234,13 @@ exports.login = async (req, res, next) => {
 };
 
 const sendTokenResponse = (user, statusCode, res) => {
-  //Create token
+  // Tạo token
   const token = user.getSignedJwtToken();
 
+  // Lấy vai trò của user
+  const role = user.role;
+
+  // Cấu hình cookie
   const options = {
     expires: new Date(
       Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000
@@ -247,9 +251,12 @@ const sendTokenResponse = (user, statusCode, res) => {
   if (process.env.NODE_ENV === "production") {
     options.secure = true;
   }
+
+  // Gửi phản hồi JSON với token và role
   res.status(statusCode).cookie("token", token, options).json({
     success: true,
     token,
+    role,
   });
 };
 
@@ -291,16 +298,20 @@ exports.getTickets = async (req, res, next) => {
 
 exports.logout = async (req, res, next) => {
   try {
-    res.cookie("token", "none", {
-      expires: new Date(Date.now() + 10 * 1000),
+    res.cookie("token", "", {
+      expires: new Date(0), // Xoá cookie ngay lập tức
       httpOnly: true,
+      secure: process.env.NODE_ENV === "production", // Chỉ dùng HTTPS trong production
+      sameSite: "Strict", // Bảo mật cookie
     });
 
     res.status(200).json({
       success: true,
+      message: "Logged out successfully",
     });
   } catch (err) {
-    res.status(400).json({ success: false, message: err });
+    console.error("Logout error:", err);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
@@ -342,7 +353,6 @@ exports.deleteUser = async (req, res, next) => {
 };
 
 exports.updateUser = async (req, res, next) => {
-
   try {
     const user = await User.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
@@ -411,5 +421,4 @@ exports.addUser = async (req, res) => {
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
   }
-
-}
+};
