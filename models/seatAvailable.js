@@ -2,7 +2,10 @@ const mongoose = require("mongoose");
 
 const seatAvailableSchema = new mongoose.Schema(
   {
-    movieShowingId: { type: mongoose.Schema.Types.ObjectId, ref: "MovieShowTime" },
+    movieShowingId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "MovieShowTime",
+    },
     seatId: { type: mongoose.Schema.Types.ObjectId, ref: "Seat" },
     isAvailable: { type: Boolean },
   },
