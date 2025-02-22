@@ -152,46 +152,117 @@ exports.register = async (req, res, next) => {
   try {
     console.log(req.body);
     const { username, email, fullname, password, role = "user" } = req.body;
-    let user;
+
     const foundUserByUsername = await User.findOne({ username: username });
     const foundUserByEmail = await User.findOne({ email: email });
-    if (foundUserByEmail == null && foundUserByEmail == null) {
-      user = await User.create({
-        username,
-        email,
-        password,
-        fullname,
-        role,
-      });
 
-      sendTokenResponse(user, 200, res);
-    } else if (foundUserByUsername != null) {
-      res.json({
+    if (foundUserByUsername || foundUserByEmail) {
+      return res.json({
         success: false,
-        message: "Username already exist!",
+        message: "Username or email already exists!",
         code: "10001",
       });
-    } else if (foundUserByUsername == null && foundUserByEmail != null) {
-      const salt = await bcrypt.genSalt(10);
-      const hashPassword = await bcrypt.hash(password, salt);
-      user = await User.findOneAndUpdate(
-        { email: email },
-        {
-          $set: {
-            username: username,
-            fullname: fullname,
-            password: hashPassword,
-          },
-        },
-        { new: true, upsert: false }
-      );
-      sendTokenResponse(user, 200, res);
     }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashPassword = await bcrypt.hash(password, salt);
+
+    const otp = generateRandomString();
+
+    const user = await User.create({
+      username,
+      email,
+      password: hashPassword,
+      fullname,
+      role,
+      otp,
+    });
+
+    const emailHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+        <h2 style="background-color: #007bff; color: white; padding: 10px;">Welcome to Our Platform!</h2>
+        <p>Dear <strong>${fullname}</strong>,</p>
+        <p>Thank you for registering. Here is your OTP for verification:</p>
+        <p>OTP: <strong>${otp}</strong></p>
+        <p style="color: #555;">If you have any questions, please contact us.</p>
+      </div>`;
+
+    await transporter.sendMail({
+      from: '"GROUP01 CI NÊ MA" <group01se1709@gmail.com>',
+      to: email,
+      subject: "OTP for Account Verification",
+      html: emailHtml,
+    });
+
+    res.json({ success: true, message: "User registered successfully. OTP sent to email." });
   } catch (err) {
     console.error("Error registering user:", err);
-    res.status(400).json({ success: false, message: err });
+    res.status(400).json({ success: false, message: err.message });
   }
 };
+
+
+exports.verifyOtpRegister = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(400).json({ success: false, message: "User not found." });
+    }
+
+    if (user.otp !== otp) {
+      return res.status(400).json({ success: false, message: "Invalid OTP." });
+    }
+
+    user.isVerified = true;
+    user.otp = null;
+    await user.save();
+
+    res.json({ success: true, message: "OTP verified successfully. You can now log in." });
+  } catch (err) {
+    console.error("Error verifying OTP:", err);
+    res.status(500).json({ success: false, message: "Server error." });
+  }
+};
+
+exports.resendOtp = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(400).json({ success: false, message: "User not found." });
+    }
+    // Tạo mã OTP mới
+    const otp = generateRandomString();
+    user.otp = otp;
+    await user.save();
+    // Gửi lại email với mã OTP mới
+    const emailHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+        <h2 style="background-color: #007bff; color: white; padding: 10px;">Resend OTP</h2>
+        <p>Dear <strong>${user.fullname}</strong>,</p>
+        <p>Your new OTP for verification is:</p>
+        <p>OTP: <strong>${otp}</strong></p>
+        <p style="color: #555;">If you did not request this, please ignore this email.</p>
+      </div>`;
+
+    await transporter.sendMail({
+      from: '"GROUP01 CI NÊ MA" <group01se1709@gmail.com>',
+      to: email,
+      subject: "Your New OTP Code",
+      html: emailHtml,
+    });
+
+    res.json({ success: true, message: "OTP resent successfully!" });
+  } catch (err) {
+    console.error("Error resending OTP:", err);
+    res.status(500).json({ success: false, message: "Server error." });
+  }
+};
+
+
 
 exports.countUsers = async (req, res, next) => {
   try {
