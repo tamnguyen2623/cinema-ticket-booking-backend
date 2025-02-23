@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const SeatAvailableSchema = new mongoose.Schema(
+const seatAvailableSchema = new mongoose.Schema(
   {
     movieShowingId: {
       type: mongoose.Schema.Types.ObjectId,
