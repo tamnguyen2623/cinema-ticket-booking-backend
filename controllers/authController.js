@@ -156,9 +156,11 @@ exports.register = async (req, res, next) => {
     let user;
     const userRole = await Role.findOne({ name: "user" });
     if (!userRole) {
+
       return res
         .status(400)
         .json({ success: false, message: "Role 'user' not found" });
+
     }
 
     const foundUserByUsername = await User.findOne({ username: username });
@@ -357,22 +359,30 @@ const sendTokenResponse = (user, statusCode, res) => {
   }
   res.status(statusCode).cookie("token", token, options).json({
     success: true,
-    role: user.role,
+    role: user.roleId.name,
     token,
   });
 };
 
 exports.getMe = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req.user.id).populate("roleId");
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
     res.status(200).json({
       success: true,
-      data: user,
+      data: {
+        username: user.username,
+        role: user.roleId.name, // Đảm bảo role trả về tên
+      },
     });
-  } catch (err) {
-    res.status(400).json({ success: false, message: err });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Server Error" });
   }
 };
+
 
 exports.getTickets = async (req, res, next) => {
   try {
