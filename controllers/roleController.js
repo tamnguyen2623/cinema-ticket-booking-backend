@@ -68,9 +68,7 @@ exports.deleteRole = async (req, res) => {
 
 exports.getEmployee = async (req, res) => {
     try {
-        const employees = await User.find()
-            .populate("roleId", "name")
-            .select("-password");
+        const employees = await User.find().populate("roleId", "name");
 
         if (!employees.length) {
             return res.status(404).json({ success: false, message: "No employees found" });
@@ -118,7 +116,7 @@ exports.createEmployee = async (req, res) => {
 exports.updateEmployee = async (req, res) => {
     try {
         const { fullName, email, roleId } = req.body;
-        const user = await User.findByIdAndUpdate(req.params.id, { fullName, email, roleId}, { new: true });
+        const user = await User.findByIdAndUpdate(req.params.id, { fullName, email, roleId }, { new: true });
 
         if (!user) {
             return res.status(404).json({ success: false, message: "User not found" });

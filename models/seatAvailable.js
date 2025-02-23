@@ -18,4 +18,4 @@ const seatAvailableSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("SeatAvailable", SeatAvailableSchema);
+module.exports = mongoose.model("SeatAvailable", seatAvailableSchema);

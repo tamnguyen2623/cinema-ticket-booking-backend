@@ -139,10 +139,6 @@ exports.updateMovieShowTime = async (req, res) => {
   }
 };
 
-
-
-
-
 exports.getShowTimesBySelection = async (req, res) => {
   try {
     const { date, cinemaId, movieId } = req.query;
