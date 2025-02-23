@@ -152,33 +152,23 @@ exports.register = async (req, res, next) => {
   try {
     console.log(req.body);
     const { username, email, fullname, password, role = "user" } = req.body;
-
+    let user;
     const foundUserByUsername = await User.findOne({ username: username });
     const foundUserByEmail = await User.findOne({ email: email });
-
-    if (foundUserByUsername || foundUserByEmail) {
-      return res.json({
-        success: false,
-        message: "Username or email already exists!",
-        code: "10001",
-      });
-    }
-
     const salt = await bcrypt.genSalt(10);
     const hashPassword = await bcrypt.hash(password, salt);
-
     const otp = generateRandomString();
 
-    const user = await User.create({
-      username,
-      email,
-      password: hashPassword,
-      fullname,
-      role,
-      otp,
-    });
-
-    const emailHtml = `
+    if (foundUserByUsername == null && foundUserByEmail == null) {
+      user = await User.create({
+        username,
+        email,
+        password,
+        fullname,
+        role,
+        otp,
+      });
+      const emailHtml = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
         <h2 style="background-color: #007bff; color: white; padding: 10px;">Welcome to Our Platform!</h2>
         <p>Dear <strong>${fullname}</strong>,</p>
@@ -187,20 +177,40 @@ exports.register = async (req, res, next) => {
         <p style="color: #555;">If you have any questions, please contact us.</p>
       </div>`;
 
-    await transporter.sendMail({
-      from: '"GROUP01 CI NÊ MA" <group01se1709@gmail.com>',
-      to: email,
-      subject: "OTP for Account Verification",
-      html: emailHtml,
-    });
-
-    res.json({ success: true, message: "User registered successfully. OTP sent to email." });
+      await transporter.sendMail({
+        from: '"GROUP01 CI NÊ MA" <group01se1709@gmail.com>',
+        to: email,
+        subject: "OTP for Account Verification",
+        html: emailHtml,
+      });
+      sendTokenResponse(user, 200, res);
+    } else if (foundUserByUsername != null) {
+      res.json({
+        success: false,
+        message: "Username already exist!",
+        code: "10001",
+      });
+    } else if (foundUserByUsername == null && foundUserByEmail != null) {
+      const salt = await bcrypt.genSalt(10);
+      const hashPassword = await bcrypt.hash(password, salt);
+      user = await User.findOneAndUpdate(
+        { email: email },
+        {
+          $set: {
+            username: username,
+            fullname: fullname,
+            password: hashPassword,
+          },
+        },
+        { new: true, upsert: false }
+      );
+      sendTokenResponse(user, 200, res);
+    }
   } catch (err) {
     console.error("Error registering user:", err);
-    res.status(400).json({ success: false, message: err.message });
+    res.status(400).json({ success: false, message: err });
   }
 };
-
 
 exports.verifyOtpRegister = async (req, res) => {
   try {
@@ -211,12 +221,14 @@ exports.verifyOtpRegister = async (req, res) => {
       return res.status(400).json({ success: false, message: "User not found." });
     }
 
+    if (user.isVerified) {
+      return res.status(400).json({ success: false, message: "Account is already verified." });
+    }
     if (user.otp !== otp) {
       return res.status(400).json({ success: false, message: "Invalid OTP." });
     }
-
+    // Xác thực tài khoản sau khi nhập đúng OTP
     user.isVerified = true;
-    user.otp = null;
     await user.save();
 
     res.json({ success: true, message: "OTP verified successfully. You can now log in." });
@@ -262,8 +274,6 @@ exports.resendOtp = async (req, res) => {
   }
 };
 
-
-
 exports.countUsers = async (req, res, next) => {
   try {
     const numberOfUsers = await User.count({ role: "user" });
@@ -290,7 +300,9 @@ exports.login = async (req, res, next) => {
     if (!user) {
       return res.status(400).json("Invalid credentials");
     }
-
+    if (!user.isVerified) {
+      return res.status(400).json("Account not verified. Please verify OTP.");
+    }
     //Check if password matches
     const isMatch = await user.matchPassword(password);
 
@@ -305,13 +317,9 @@ exports.login = async (req, res, next) => {
 };
 
 const sendTokenResponse = (user, statusCode, res) => {
-  // Tạo token
+  //Create token
   const token = user.getSignedJwtToken();
 
-  // Lấy vai trò của user
-  const role = user.role;
-
-  // Cấu hình cookie
   const options = {
     expires: new Date(
       Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000
@@ -322,12 +330,9 @@ const sendTokenResponse = (user, statusCode, res) => {
   if (process.env.NODE_ENV === "production") {
     options.secure = true;
   }
-
-  // Gửi phản hồi JSON với token và role
   res.status(statusCode).cookie("token", token, options).json({
     success: true,
     token,
-    role,
   });
 };
 
@@ -369,20 +374,16 @@ exports.getTickets = async (req, res, next) => {
 
 exports.logout = async (req, res, next) => {
   try {
-    res.cookie("token", "", {
-      expires: new Date(0), // Xoá cookie ngay lập tức
+    res.cookie("token", "none", {
+      expires: new Date(Date.now() + 10 * 1000),
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // Chỉ dùng HTTPS trong production
-      sameSite: "Strict", // Bảo mật cookie
     });
 
     res.status(200).json({
       success: true,
-      message: "Logged out successfully",
     });
   } catch (err) {
-    console.error("Logout error:", err);
-    res.status(500).json({ success: false, message: "Server error" });
+    res.status(400).json({ success: false, message: err });
   }
 };
 
@@ -424,6 +425,7 @@ exports.deleteUser = async (req, res, next) => {
 };
 
 exports.updateUser = async (req, res, next) => {
+
   try {
     const user = await User.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
@@ -492,4 +494,5 @@ exports.addUser = async (req, res) => {
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
   }
-};
+
+}
