@@ -26,7 +26,7 @@ const movietype = require("./routes/movietype");
 const combo = require("./routes/combo");
 const booking = require("./routes/booking");
 const seatAvailable = require("./routes/seatAvailable");
-
+const role = require("./routes/role");
 mongoose.set("strictQuery", false);
 mongoose
   .connect(process.env.DATABASE)
@@ -72,6 +72,8 @@ app.use("/movieshowing", movieshowing);
 app.use("/movietype", movietype);
 app.use("/combo", combo);
 app.use("/seatAvailable", seatAvailable);
+app.use("/role", role);
+
 
 app.use(passport.initialize());
 const port = process.env.PORT || 8080;
