@@ -152,9 +152,9 @@ exports.changeUsername = async (req, res, next) => {
 exports.register = async (req, res, next) => {
   try {
     console.log(req.body);
-    const { username, email, fullname, password } = req.body;
+    const { username, email, fullname, password, role = "user" } = req.body;
 
-    const foundUserByUsername = await User.findOne({ username: username }).populate('rol');
+    const foundUserByUsername = await User.findOne({ username: username });
     const foundUserByEmail = await User.findOne({ email: email });
 
     if (foundUserByUsername || foundUserByEmail) {
@@ -175,7 +175,7 @@ exports.register = async (req, res, next) => {
       email,
       password: hashPassword,
       fullname,
-     
+      role,
       otp,
     });
 
