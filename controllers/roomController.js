@@ -1,6 +1,7 @@
 const Room = require("../models/Room");
 const Cinema = require("../models/Cinema");
 const Seat = require("../models/Seat");
+
 exports.createRoom = async (req, res) => {
   try {
     const { cinema, roomname, roomtype, row, colum } = req.body;
@@ -35,9 +36,28 @@ exports.createRoom = async (req, res) => {
 
 exports.getAllRooms = async (req, res) => {
   try {
-    const rooms = await Room.find({ status: true })
-      .populate("cinema")
+    const { search, cinema, roomtype } = req.query;
+    let filter = { status: true };
+
+    // 🛠 Lọc theo tên phòng (search)
+    if (search) {
+      filter.roomname = { $regex: search, $options: "i" };
+    }
+
+    // 🛠 Lọc theo rạp chiếu
+    if (cinema) {
+      filter.cinema = cinema;
+    }
+
+    // 🛠 Lọc theo loại phòng
+    if (roomtype) {
+      filter.roomtype = roomtype;
+    }
+
+    const rooms = await Room.find(filter)
+      .populate("cinema", "name")
       .populate("seats");
+
     res.status(200).json({ rooms });
   } catch (err) {
     console.error(err);
@@ -48,7 +68,7 @@ exports.getAllRooms = async (req, res) => {
 exports.getRoomById = async (req, res) => {
   try {
     const room = await Room.findById(req.params.id)
-      .populate("cinema")
+      .populate("cinema", "name")
       .populate("seats");
     if (!room) {
       return res.status(404).json({ message: "Room not found" });

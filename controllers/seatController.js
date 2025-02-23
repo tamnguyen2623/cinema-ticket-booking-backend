@@ -21,18 +21,6 @@ class SeatController {
     }
   }
 
-  // Get Seat
-  // get(req, res, next) {
-  //   res.status(200).json({ data: req.seat });
-  // }
-
-  // List of Seats
-  // search(req, res, next) {
-  //   Seat.find({ name: { $regex: req.params.text, $options: "i" } })
-  //     .then((seats) => res.status(200).json({ data: seats }))
-  //     .catch((error) => res.status(500).json({ message: error.message }));
-  // }
-
   // Create multiple seats
   async createSeats(req, res, next) {
     const { room, row, column } = req.body;
@@ -78,15 +66,6 @@ class SeatController {
       .then(() => res.status(200).json({ _id: req.params.id, data: req.body }))
       .catch((error) => res.status(500).json({ message: error.message }));
   }
-
-  // Delete Seat
-  //   delete(req, res, next) {
-  //     Seat.deleteOne({ _id: req.params.id })
-  //       .then(() =>
-  //         res.status(200).json({ message: "Delete Seat Succesfully!" })
-  //       )
-  //       .catch((error) => res.status(500).json({ message: error.message }));
-  //   }
 }
 
 module.exports = new SeatController();
