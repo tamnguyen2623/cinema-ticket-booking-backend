@@ -37,6 +37,10 @@ const userSchema = new mongoose.Schema({
   registerCode: {
     type: String,
   },
+  isVerified: {
+    type: Boolean,
+    default: false
+  },
   tickets: [
     {
       showtime: { type: mongoose.Schema.ObjectId, ref: "Showtime" },
