@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const SeatAvailableSchema = new mongoose.Schema(
+const seatAvailableSchema = new mongoose.Schema(
   {
     movieShowingId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -18,4 +18,4 @@ const SeatAvailableSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("SeatAvailable", SeatAvailableSchema);
+module.exports = mongoose.model("SeatAvailable", seatAvailableSchema);

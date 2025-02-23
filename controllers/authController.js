@@ -152,8 +152,15 @@ exports.changeUsername = async (req, res, next) => {
 exports.register = async (req, res, next) => {
   try {
     console.log(req.body);
-    const { username, email, fullname, password, role = "user" } = req.body;
+    const { username, email, fullname, password } = req.body;
     let user;
+    const userRole = await Role.findOne({ name: "user" });
+    if (!userRole) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Role 'user' not found" });
+    }
+
     const foundUserByUsername = await User.findOne({ username: username });
     const foundUserByEmail = await User.findOne({ email: email });
     const salt = await bcrypt.genSalt(10);
@@ -166,7 +173,7 @@ exports.register = async (req, res, next) => {
         email,
         password,
         fullname,
-        role,
+        roleId: userRole._id,
         otp,
       });
       const emailHtml = `
@@ -201,6 +208,7 @@ exports.register = async (req, res, next) => {
             username: username,
             fullname: fullname,
             password: hashPassword,
+            roleId: userRole._id,
           },
         },
         { new: true, upsert: false }
@@ -219,11 +227,15 @@ exports.verifyOtpRegister = async (req, res) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(400).json({ success: false, message: "User not found." });
+      return res
+        .status(400)
+        .json({ success: false, message: "User not found." });
     }
 
     if (user.isVerified) {
-      return res.status(400).json({ success: false, message: "Account is already verified." });
+      return res
+        .status(400)
+        .json({ success: false, message: "Account is already verified." });
     }
     if (user.otp !== otp) {
       return res.status(400).json({ success: false, message: "Invalid OTP." });
@@ -232,7 +244,10 @@ exports.verifyOtpRegister = async (req, res) => {
     user.isVerified = true;
     await user.save();
 
-    res.json({ success: true, message: "OTP verified successfully. You can now log in." });
+    res.json({
+      success: true,
+      message: "OTP verified successfully. You can now log in.",
+    });
   } catch (err) {
     console.error("Error verifying OTP:", err);
     res.status(500).json({ success: false, message: "Server error." });
@@ -245,7 +260,9 @@ exports.resendOtp = async (req, res) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(400).json({ success: false, message: "User not found." });
+      return res
+        .status(400)
+        .json({ success: false, message: "User not found." });
     }
     // Tạo mã OTP mới
     const otp = generateRandomString();
@@ -296,7 +313,9 @@ exports.login = async (req, res, next) => {
     }
 
     //Check for user
-    const user = await User.findOne({ username }).select("+password").populate('roleId');
+    const user = await User.findOne({ username })
+      .select("+password")
+      .populate("roleId");
 
     if (!user) {
       return res.status(400).json("Invalid credentials");
@@ -320,7 +339,6 @@ exports.login = async (req, res, next) => {
 const sendTokenResponse = (user, statusCode, res) => {
   //Create token
   const token = user.getSignedJwtToken();
-
 
   // Lấy vai trò của user
   const role = user.roleId.name;
@@ -433,7 +451,6 @@ exports.deleteUser = async (req, res, next) => {
 };
 
 exports.updateUser = async (req, res, next) => {
-
   try {
     const user = await User.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
@@ -502,5 +519,4 @@ exports.addUser = async (req, res) => {
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
   }
-
-}
+};
