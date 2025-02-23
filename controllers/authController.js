@@ -1,5 +1,6 @@
 const { transporter } = require("../config/mailConfig");
 const User = require("../models/User");
+const Role = require("../models/Role");
 const bcrypt = require("bcryptjs");
 require("dotenv").config();
 
@@ -151,9 +152,9 @@ exports.changeUsername = async (req, res, next) => {
 exports.register = async (req, res, next) => {
   try {
     console.log(req.body);
-    const { username, email, fullname, password, role = "user" } = req.body;
+    const { username, email, fullname, password } = req.body;
 
-    const foundUserByUsername = await User.findOne({ username: username });
+    const foundUserByUsername = await User.findOne({ username: username }).populate('rol');
     const foundUserByEmail = await User.findOne({ email: email });
 
     if (foundUserByUsername || foundUserByEmail) {
@@ -174,7 +175,7 @@ exports.register = async (req, res, next) => {
       email,
       password: hashPassword,
       fullname,
-      role,
+     
       otp,
     });
 
@@ -285,7 +286,7 @@ exports.login = async (req, res, next) => {
     }
 
     //Check for user
-    const user = await User.findOne({ username }).select("+password");
+    const user = await User.findOne({ username }).select("+password").populate('roleId');
 
     if (!user) {
       return res.status(400).json("Invalid credentials");
@@ -309,7 +310,7 @@ const sendTokenResponse = (user, statusCode, res) => {
   const token = user.getSignedJwtToken();
 
   // Lấy vai trò của user
-  const role = user.role;
+  const role = user.roleId.name;
 
   // Cấu hình cookie
   const options = {

@@ -1,0 +1,20 @@
+const { getRoles, createRole, createEmployee, getEmployeeById, updateEmployee, updateRole, getRoleById, deleteRole, getEmployee, deleteEmployee } = require("../controllers/roleController");
+const { authorize, protect } = require("../middleware/auth");
+const express = require("express");
+
+const router = express.Router();
+router.get("/",protect, authorize("admin"), getRoles);
+// router.get("/", getRoles);
+router.get("/:id", protect, authorize("admin"), getRoleById);
+router.post("/create",protect,authorize("admin"), createRole);
+router.put("/:id",protect, authorize("admin"), updateRole);
+router.delete('/delete/:id',protect,authorize("admin"), deleteRole)
+
+router.post("/createEmployee", createEmployee);
+router.put("/putEmployee/:id", updateEmployee);
+// router.get("/get", protect, authorize("admin"), getEmployee);
+router.get("/getEmployee/:id", protect, authorize("admin"), getEmployeeById);
+router.get("/getEmployee/", protect, authorize("admin"), getEmployee);
+router.delete("/deleteEmployee/:id", protect, authorize("admin"), deleteEmployee);
+
+module.exports = router;
