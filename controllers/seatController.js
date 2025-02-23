@@ -4,7 +4,7 @@ class SeatController {
   // List of Seats
   async getAll(req, res, next) {
     try {
-      const seats = await Seat.find();
+      const seats = await Seat.find().populate("roomId");
       res.status(200).json(seats);
     } catch (error) {
       res.status(500).json({ message: error.message });
