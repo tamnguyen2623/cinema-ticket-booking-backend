@@ -1,5 +1,6 @@
 const { transporter } = require("../config/mailConfig");
 const User = require("../models/User");
+const Role = require("../models/Role");
 const bcrypt = require("bcryptjs");
 require("dotenv").config();
 
@@ -295,7 +296,7 @@ exports.login = async (req, res, next) => {
     }
 
     //Check for user
-    const user = await User.findOne({ username }).select("+password");
+    const user = await User.findOne({ username }).select("+password").populate('roleId');
 
     if (!user) {
       return res.status(400).json("Invalid credentials");
@@ -319,6 +320,12 @@ exports.login = async (req, res, next) => {
 const sendTokenResponse = (user, statusCode, res) => {
   //Create token
   const token = user.getSignedJwtToken();
+
+
+  // Lấy vai trò của user
+  const role = user.roleId.name;
+
+  // Cấu hình cookie
 
   const options = {
     expires: new Date(
