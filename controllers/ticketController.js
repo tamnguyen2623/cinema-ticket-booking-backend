@@ -1,38 +1,27 @@
-
-const mongoose = require("mongoose");
 const TicketPrice = require("../models/Ticket");
 
 exports.createTicketPrice = async (req, res) => {
   try {
-    console.log("📡 Dữ liệu nhận được từ frontend:", req.body);
+    const { roomType, seatType, price } = req.body;
 
-    const { roomId, seatType, price } = req.body;
-
-    if (!roomId || !seatType || !price) {
-      return res.status(400).json({ message: "Thiếu dữ liệu bắt buộc!" });
+    if (!roomType || !seatType || !price) {
+      return res.status(400).json({ message: "All fields are required!" });
     }
 
-    if (!mongoose.Types.ObjectId.isValid(roomId)) {
-      return res.status(400).json({ message: "Room ID không hợp lệ!" });
-    }
-
-    if (isNaN(price) || Number(price) <= 0) {
-      return res.status(400).json({ message: "Giá phải là số và lớn hơn 0!" });
-    }
-
-    // ✅ Chuyển price thành số trước khi lưu
-    const newTicket = new TicketPrice({
-      roomId,
+    const newTicketPrice = new TicketPrice({
+      roomType,
       seatType,
-      price: Number(price),
+      price,
     });
-    await newTicket.save();
 
-    console.log("✅ Vé mới đã được tạo:", newTicket);
-    res.status(201).json(newTicket);
-  } catch (error) {
-    console.error("❌ Lỗi Backend:", error);
-    res.status(500).json({ message: "Lỗi server", error: error.message });
+    await newTicketPrice.save();
+    res.status(201).json({
+      message: "Ticket price created successfully",
+      ticketPrice: newTicketPrice,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
