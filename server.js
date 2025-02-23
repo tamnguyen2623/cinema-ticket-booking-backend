@@ -29,7 +29,7 @@ const seatAvailable = require("./routes/seatAvailable");
 const role = require("./routes/role");
 mongoose.set("strictQuery", false);
 mongoose
-  .connect(process.env.DATABASE)
+  .connect(process.env.MONGO_URL)
   .then(() => {
     console.log("mongoose connected!");
   })
