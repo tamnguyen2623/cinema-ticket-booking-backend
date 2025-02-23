@@ -225,11 +225,15 @@ exports.verifyOtpRegister = async (req, res) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(400).json({ success: false, message: "User not found." });
+      return res
+        .status(400)
+        .json({ success: false, message: "User not found." });
     }
 
     if (user.isVerified) {
-      return res.status(400).json({ success: false, message: "Account is already verified." });
+      return res
+        .status(400)
+        .json({ success: false, message: "Account is already verified." });
     }
     if (user.otp !== otp) {
       return res.status(400).json({ success: false, message: "Invalid OTP." });
@@ -238,7 +242,10 @@ exports.verifyOtpRegister = async (req, res) => {
     user.isVerified = true;
     await user.save();
 
-    res.json({ success: true, message: "OTP verified successfully. You can now log in." });
+    res.json({
+      success: true,
+      message: "OTP verified successfully. You can now log in.",
+    });
   } catch (err) {
     console.error("Error verifying OTP:", err);
     res.status(500).json({ success: false, message: "Server error." });
@@ -251,7 +258,9 @@ exports.resendOtp = async (req, res) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(400).json({ success: false, message: "User not found." });
+      return res
+        .status(400)
+        .json({ success: false, message: "User not found." });
     }
     // Tạo mã OTP mới
     const otp = generateRandomString();
@@ -302,7 +311,9 @@ exports.login = async (req, res, next) => {
     }
 
     //Check for user
-    const user = await User.findOne({ username }).select("+password").populate('roleId');
+    const user = await User.findOne({ username })
+      .select("+password")
+      .populate("roleId");
 
     if (!user) {
       return res.status(400).json("Invalid credentials");
@@ -435,7 +446,6 @@ exports.deleteUser = async (req, res, next) => {
 };
 
 exports.updateUser = async (req, res, next) => {
-
   try {
     const user = await User.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
@@ -504,5 +514,4 @@ exports.addUser = async (req, res) => {
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
   }
-
-}
+};

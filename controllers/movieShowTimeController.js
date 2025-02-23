@@ -167,7 +167,7 @@ exports.getShowTimesBySelection = async (req, res) => {
       .populate("movieId", "name")
       .populate("showtimeId", "startTime")
       .populate("cinemaId", "name")
-      .populate("roomId", "roomname");
+      .populate("roomId", "roomname roomtype");
 
     if (!showTimes.length) {
       return res.status(404).json({
@@ -194,6 +194,7 @@ exports.getShowTimesBySelection = async (req, res) => {
       room: {
         _id: show.roomId._id,
         roomname: show.roomId.roomname,
+        roomtype: show.roomId.roomtype,
       },
     }));
 
