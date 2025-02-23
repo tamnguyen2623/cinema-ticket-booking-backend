@@ -1,6 +1,6 @@
 const MovieShowing = require("../models/MovieShowing");
 const Seat = require("../models/Seat");
-const SeatAvailable = require("../models/seatAvailable");
+const SeatAvailable = require("../models/SeatAvailables");
 // Controller: Lọc suất chiếu theo phim và rạp đã chọn
 
 exports.getAllMovieShowings = async (req, res) => {

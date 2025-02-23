@@ -9,7 +9,7 @@ const { randomUUID } = require("crypto");
 const { transporter } = require("../config/mailConfig");
 require("dotenv");
 const Booking = require("../models/Booking");
-const SeatAvailable = require("../models/seatAvailable");
+const SeatAvailable = require("../models/SeatAvailables");
 exports.orderByVnPay = async (req, res) => {
   try {
     console.log("📥 API Received Data:", JSON.stringify(req.body, null, 2));
