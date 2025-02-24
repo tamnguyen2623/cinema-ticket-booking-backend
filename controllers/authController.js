@@ -309,11 +309,11 @@ exports.login = async (req, res, next) => {
     if (!username || !password) {
       return res.status(400).json("Please provide an username and password");
     }
-
+    
     //Check for user
     const user = await User.findOne({ username })
-      .select("+password")
-      .populate("roleId");
+    .select("+password")
+    .populate("roleId");
 
     if (!user) {
       return res.status(400).json("Invalid credentials");
@@ -329,6 +329,7 @@ exports.login = async (req, res, next) => {
     }
 
     sendTokenResponse(user, 200, res);
+
   } catch (err) {
     res.status(400).json({ success: false, message: err });
   }

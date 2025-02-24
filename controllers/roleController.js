@@ -15,9 +15,9 @@ exports.getRoles = async (req, res) => {
 exports.getRoleById = async (req, res) => {
     try {
         const role = await Role.findById(req.params.id);
-        if (!role || role.isDelete) {
-            return res.status(404).json({ success: false, message: "Role not found" });
-        }
+        // if (!role || role.isDelete) {
+        //     return res.status(404).json({ success: false, message: "Role not found" });
+        // }
         res.status(200).json({ success: true, data: role });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
@@ -54,11 +54,11 @@ exports.updateRole = async (req, res) => {
 // Xóa vai trò (Soft Delete)
 exports.deleteRole = async (req, res) => {
     try {
-        const role = await Role.findByIdAndUpdate(req.params.id, { new: true });
+        const role = await Role.findByIdAndDelete(req.params.id, { new: true });
         if (!role) {
             return res.status(404).json({ success: false, message: "Role not found" });
         }
-        role.isDelete = true;
+        // role.isDelete = true;
         await role.save()
         res.status(200).json({ success: true, message: "Role deleted successfully" });
     } catch (err) {
@@ -69,6 +69,10 @@ exports.deleteRole = async (req, res) => {
 exports.getEmployee = async (req, res) => {
     try {
         const employees = await User.find().populate("roleId", "name");
+        const { username, role } = req.query;
+        const query = {};
+        if (username) query.username = { $regex: username, $options: 'i' };
+        if (role) query['roleId'] = role;
 
         if (!employees.length) {
             return res.status(404).json({ success: false, message: "No employees found" });
@@ -88,9 +92,9 @@ exports.getEmployee = async (req, res) => {
 exports.getEmployeeById = async (req, res) => {
     try {
         const user = await User.findById(req.params.id).populate('roleId');
-        if (!user || user.isDelete) {
-            return res.status(404).json({ success: false, message: "User not found" });
-        }
+        // if (!user || user.isDelete) {
+        //     return res.status(404).json({ success: false, message: "User not found" });
+        // }
         res.status(200).json({ success: true, data: user });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
@@ -100,8 +104,8 @@ exports.getEmployeeById = async (req, res) => {
 // Tạo Employee mới
 exports.createEmployee = async (req, res) => {
     try {
-        const { roleId, username, email, password, fullname } = req.body;
-        const user = await User.create({ roleId, username, email, password, fullname });
+        const { roleId, username, email,  fullname } = req.body;
+        const user = await User.create({ roleId, username, email,  fullname });
 
         // Populate để hiển thị tên role
         const populatedUser = await User.findById(user._id).populate("roleId", "name");
@@ -115,8 +119,8 @@ exports.createEmployee = async (req, res) => {
 // Cập nhật Employee
 exports.updateEmployee = async (req, res) => {
     try {
-        const { fullName, email, roleId } = req.body;
-        const user = await User.findByIdAndUpdate(req.params.id, { fullName, email, roleId }, { new: true });
+        const { fullname, email, roleId } = req.body;
+        const user = await User.findByIdAndUpdate(req.params.id, { fullname, email, roleId }, { new: true });
 
         if (!user) {
             return res.status(404).json({ success: false, message: "User not found" });
@@ -136,7 +140,7 @@ exports.deleteEmployee = async (req, res) => {
         if (!user) {
             return res.status(404).json({ success: false, message: "User not found" });
         }
-
+user.isDelete = true;
         res.status(200).json({ success: true, message: "User deleted successfully" });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });

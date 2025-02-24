@@ -1,4 +1,4 @@
-const SeatAvailable = require("../models/seatAvailable");
+const SeatAvailable = require("../models/SeatAvailables");
 const Seat = require("../models/Seat");
 
 class SeatAvailableController {

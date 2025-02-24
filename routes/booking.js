@@ -9,4 +9,8 @@ router.get(
   "/booking/:transactionId",
   bookingController.getBookingByTransactionId
 );
+router.get(
+  "/booking/user/:userId",
+  bookingController.getUserBookings
+);
 module.exports = router;

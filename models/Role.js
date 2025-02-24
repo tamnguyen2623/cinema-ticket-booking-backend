@@ -7,10 +7,10 @@ const roleSchema = new mongoose.Schema({
         // unique: true
     }
     , 
-    isDelete: {
-        type: Boolean,
-         default: false 
-    },
+    // isDelete: {
+    //     type: Boolean,
+    //      default: false 
+    // },
 });
 
 module.exports = mongoose.model("Role", roleSchema);
