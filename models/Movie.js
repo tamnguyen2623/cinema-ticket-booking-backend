@@ -34,6 +34,13 @@ const movieSchema = new mongoose.Schema(
       type: Number,
       required: [true, "Please add a movie price"],
     },
+    movieType: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "MovieType",
+    },
+    actor: {
+      type: String,
+    }
   },
   { timestamps: true }
 );
