@@ -7,6 +7,7 @@ const QRCode = require("qrcode");
 const { randomUUID } = require("crypto");
 const ExcelJS = require("exceljs");
 const { transporter } = require("../config/mailConfig");
+const Booking = require("../models/Booking");
 require("dotenv");
 
 // API xử lý đơn hàng
@@ -412,6 +413,23 @@ exports.totalRevenue = async (req, res, next) => {
     res.status(400).json({ success: false, message: err });
   }
 };
+exports.totalRevenueV2 = async (req, res, next) => {
+  try {
+    const orders = await Booking.find({ status: "success" });
+    let totalRevenue = 0;
+    orders.forEach((order) => (totalRevenue = totalRevenue + order.price));
+    console.log(orders);
+    console.log(totalRevenue);
+    res.status(200).json({
+      success: true,
+      data: {
+        totalRevenue: totalRevenue,
+      },
+    });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err });
+  }
+};
 
 exports.countOrdersByCinema = async (req, res, next) => {
   const status = "done";
@@ -462,39 +480,14 @@ exports.countOrdersByCinema = async (req, res, next) => {
 };
 
 exports.getTotalRevenueByCinema = async (req, res, next) => {
-  const status = "done";
-  const results = await Order.aggregate([
-    { $match: { status: { $eq: status } } },
+  const status = "success";
+  const results = await Booking.aggregate([
     {
-      $lookup: {
-        from: "showtimes",
-        localField: "showtime",
-        foreignField: "_id",
-        as: "showtimeDetails",
-      },
+      $match: { status: "success" },
     },
-    { $unwind: "$showtimeDetails" },
-    {
-      $lookup: {
-        from: "theaters",
-        localField: "showtimeDetails.theater",
-        foreignField: "_id",
-        as: "theaterDetails",
-      },
-    },
-    { $unwind: "$theaterDetails" },
-    {
-      $lookup: {
-        from: "cinemas",
-        localField: "theaterDetails.cinema",
-        foreignField: "_id",
-        as: "cinemaDetails",
-      },
-    },
-    { $unwind: "$cinemaDetails" },
     {
       $group: {
-        _id: "$cinemaDetails.name",
+        _id: "$cinema",
         totalRevenue: { $sum: "$price" },
       },
     },
@@ -511,13 +504,13 @@ exports.getTotalRevenueByCinema = async (req, res, next) => {
 
 exports.getTotalRevenueByMonth = async (req, res, next) => {
   const { year } = req.query;
-  const status = "done";
+  const status = "success";
 
   if (!year) {
     return res.status(400).json({ message: "Vui lòng cung cấp năm." });
   }
 
-  const results = await Order.aggregate([
+  const results = await Booking.aggregate([
     {
       $match: {
         status: status,
@@ -552,42 +545,62 @@ exports.getTotalRevenueByMonth = async (req, res, next) => {
   res.json(revenueByMonth);
 };
 
-exports.getTotalRevenueByMovie = async (req, res, next) => {
-  const status = "done";
+exports.getTotalRevenueByMonthV2 = async (req, res) => {
+  try {
+    const { year } = req.query;
+    const revenueByMonth = await Booking.aggregate([
+      {
+        $match: {
+          status: "success",
+          paymentTime: {
+            $gte: new Date(`${year}-01-01T00:00:00.000Z`),
+            $lt: new Date(`${year + 1}-01-01T00:00:00.000Z`),
+          },
+        },
+      },
+      {
+        $group: {
+          _id: { $month: "$paymentTime" },
+          totalRevenue: { $sum: "$price" },
+        },
+      },
+      {
+        $sort: { "_id": 1 },
+      },
+    ]);
 
-  const results = await Order.aggregate([
-    { 
-      $match: { status: status } 
-    },
+    // Chuyển đổi kết quả thành đủ 12 tháng, nếu tháng nào không có doanh thu thì set về 0
+    const result = Array.from({ length: 12 }, (_, i) => {
+      const monthData = revenueByMonth.find((m) => m._id === i + 1);
+      return monthData ? monthData.totalRevenue : 0;
+    });
+
+    return result;
+  } catch (error) {
+    console.error("Error calculating revenue by month:", error);
+    return Array(12).fill(0); // Nếu lỗi, trả về mảng 12 tháng với giá trị 0
+  }
+};
+
+
+exports.getTotalRevenueByMovie = async (req, res, next) => {
+  const status = "success";
+
+  const results = await Booking.aggregate([
     {
-      $lookup: {
-        from: "showtimes",
-        localField: "showtime",
-        foreignField: "_id",
-        as: "showtimeDetails",
-      },
+      $match: { status: "success" },
     },
-    { $unwind: "$showtimeDetails" },
-    {
-      $lookup: {
-        from: "movies", // Liên kết với bảng Movie
-        localField: "showtimeDetails.movie",
-        foreignField: "_id",
-        as: "movieDetails",
-      },
-    },
-    { $unwind: "$movieDetails" },
     {
       $group: {
-        _id: "$movieDetails.name", // Nhóm theo tên phim
-        totalRevenue: { $sum: "$price" }, // Tính tổng doanh thu
+        _id: "$movieName",
+        totalRevenue: { $sum: "$price" },
       },
     },
-    { $sort: { totalRevenue: -1 } }, // Sắp xếp doanh thu giảm dần
+    { $sort: { totalRevenue: -1 } }, 
     {
       $project: {
         _id: 0,
-        movieName: "$_id", // Đổi tên key cho dễ hiểu
+        movieName: "$_id", 
         totalRevenue: 1,
       },
     },
