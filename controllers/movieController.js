@@ -162,7 +162,6 @@ exports.createMovie = async (req, res, next) => {
         img: uploadedFiles["img"], // Use the img URL from the uploaded files
         trailer: uploadedFiles["trailer"], // Use the trailer URL from the uploaded files
         description: req.body.description,
-        price: req.body.price,
         movieType: req.body.movieType,
         actor: req.body.actor,
       };

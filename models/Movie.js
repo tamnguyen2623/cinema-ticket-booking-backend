@@ -30,10 +30,6 @@ const movieSchema = new mongoose.Schema(
       required: [true, "Please add a movie description"],
       trim: true,
     },
-    price: {
-      type: Number,
-      required: [true, "Please add a movie price"],
-    },
     movieType: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "MovieType",
