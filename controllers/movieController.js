@@ -2,13 +2,19 @@ const Movie = require("../models/Movie");
 const Showtime = require("../models/Showtime");
 const multer = require("multer");
 const { uploadMultipleFiles } = require("./fileController");
+const Cinema = require("../models/Cinema");
+const MovieType = require("../models/MovieType");
 
 const upload = multer();
 
 exports.getMovies = async (req, res, next) => {
   try {
-    const movies = await Movie.find().sort({ createdAt: -1 });
-    res.status(200).json({ success: true, count: movies.length, data: movies });
+    const movies = await Movie.find()
+    .populate("movieType", "name")
+    .sort({ createdAt: -1 });
+    res
+      .status(200)
+      .json({ success: true, count: movies.length, data: movies });
   } catch (err) {
     res.status(400).json({ success: false, message: err });
   }
@@ -149,7 +155,6 @@ exports.createMovie = async (req, res, next) => {
     try {
       // Upload files to S3 using multipart upload
       const uploadedFiles = await uploadMultipleFiles(filesToUpload);
-
       // Create a new movie object with the URLs from the uploaded files
       const movieData = {
         name: req.body.name,
@@ -158,6 +163,8 @@ exports.createMovie = async (req, res, next) => {
         trailer: uploadedFiles["trailer"], // Use the trailer URL from the uploaded files
         description: req.body.description,
         price: req.body.price,
+        movieType: req.body.movieType,
+        actor: req.body.actor,
       };
 
       // Save the movie to the database
