@@ -165,3 +165,38 @@ exports.getBookingByTransactionId = async (req, res) => {
     res.status(500).json({ success: false, message: "Error server" });
   }
 };
+
+// Lấy danh sách vé của người dùng đã đặt
+
+exports.getUserBookings = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    console.log("Fetching bookings for user:", userId);
+
+    if (!userId) {
+      return res.status(400).json({ success: false, message: "Thiếu thông tin userId." });
+    }
+
+    // Truy vấn các booking của user, sắp xếp theo ngày đặt mới nhất
+    const bookings = await Booking.find({ user: userId })
+      .select(
+        "movieName cinema room showtime date seats price currency status transactionId paymentTime qrCode createdAt updatedAt"
+      )
+      .sort({ createdAt: -1 });
+
+    if (!bookings.length) {
+      return res.status(404).json({ success: false, message: "Không tìm thấy vé!" });
+    }
+
+    res.status(200).json({ success: true, bookings });
+  } catch (error) {
+    console.error("Lỗi khi lấy vé:", error);
+
+    if (error.name === "CastError") {
+      return res.status(400).json({ success: false, message: "ID người dùng không hợp lệ." });
+    }
+
+    res.status(500).json({ success: false, message: "Lỗi server" });
+  }
+};
+
