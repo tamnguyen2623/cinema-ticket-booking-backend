@@ -338,7 +338,7 @@ const sendTokenResponse = (user, statusCode, res) => {
   //Create token
   const token = user.getSignedJwtToken();
   // Lấy vai trò của user
-  const role = user.roleId.name;
+  const userid = user.id;
   // Cấu hình cookie
   const options = {
     expires: new Date(
@@ -353,26 +353,20 @@ const sendTokenResponse = (user, statusCode, res) => {
   res.status(statusCode).cookie("token", token, options).json({
     success: true,
     role: user.roleId.name,
+    userid: userid,
     token,
   });
 };
 
 exports.getMe = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user.id).populate("roleId");
-    if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
-    }
+    const user = await User.findById(req.user.id).populate('roleId');
     res.status(200).json({
       success: true,
-      data: {
-        username: user.username,
-        role: user.roleId.name, // Đảm bảo role trả về tên
-      },
+      data: user
     });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: "Server Error" });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err });
   }
 };
 
