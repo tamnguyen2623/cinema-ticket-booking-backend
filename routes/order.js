@@ -1,9 +1,9 @@
 const express = require('express');
 const { callBackVnPay, getOrders, exportOrdersToExcelFile, countOrders, totalRevenueV2, countOrdersByCinema, getTotalRevenueByCinema, getTotalRevenueByMonth, getTotalRevenueByMovie } = require('../controllers/orderController');
 
-const router = express.Router()
+const router = express.Router();
 
-const { protect, authorize } = require('../middleware/auth');
+const { protect, authorize } = require("../middleware/auth");
 
 // router.get('/call-back/vnpay', callBackVnPay);
 router.get('/admin/orders', protect, authorize('admin'), getOrders);
@@ -15,4 +15,4 @@ router.get('/order/revenue-by-cinema', protect, authorize('admin'), getTotalReve
 router.get('/order/revenue-by-movie', protect, authorize('admin'), getTotalRevenueByMovie);
 router.get('/order/revenue-by-month', protect, authorize('admin'), getTotalRevenueByMonth);
 
-module.exports = router
+module.exports = router;

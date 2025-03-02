@@ -25,7 +25,10 @@ const userSchema = new mongoose.Schema({
     ref: 'Role',
     required: true
   },
-
+  isDelete: {
+    type: Boolean,
+    default: false
+  },
   password: {
     type: String,
     // required: [true, 'Please add a password'],

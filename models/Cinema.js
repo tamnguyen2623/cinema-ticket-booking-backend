@@ -8,10 +8,10 @@ const cinemaSchema = new mongoose.Schema(
       unique: true,
       required: [true, "Please add a name"],
     },
-    // address: {
-    //   type: String,
-    //   required: [true, "Please add address"],
-    // },
+    address: {
+      type: String,
+      required: [true, "Please add address"],
+    },
     isDelete: {
       type: Boolean,
       default: false,
