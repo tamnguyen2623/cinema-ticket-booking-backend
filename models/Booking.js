@@ -35,6 +35,14 @@ const bookingSchema = new mongoose.Schema(
       type: [String],
       required: true,
     },
+    voucherId: {
+      type: String,
+      default: null,
+    },
+    combo: {
+      type: [String],
+      default: null,
+    },
     price: {
       type: Number,
       required: true,
