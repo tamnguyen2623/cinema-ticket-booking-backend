@@ -1,11 +1,7 @@
 const { ProductCode, VnpLocale, dateFormat } = require("vnpay");
 const mongoose = require("mongoose");
-const User = require("../models/User");
-const Order = require("../models/Order");
 const { vnpay } = require("../config/vnpayConfig");
-const Showtime = require("../models/Showtime");
 const QRCode = require("qrcode");
-const { randomUUID } = require("crypto");
 const { transporter } = require("../config/mailConfig");
 require("dotenv");
 const Booking = require("../models/Booking");
@@ -79,47 +75,25 @@ exports.orderByVnPay = async (req, res) => {
     });
     res.status(200).json({ success: true, paymentUrl });
   } catch (error) {
-    console.error("🚨 Error orderByVnPay:", error);
+    console.error("Error orderByVnPay:", error);
     res.status(500).json({ message: "Error server" });
   }
 };
 
 exports.callBackVnPay = async (req, res) => {
   try {
-    console.log("📥 API (VNPay Callback):", JSON.stringify(req.body, null, 2));
+    console.log("API (VNPay Callback):", JSON.stringify(req.body, null, 2));
 
     const { vnp_ResponseCode: code, vnp_TxnRef: transactionId } = req.query;
 
     if (!transactionId) {
-      return res.status(400).send(" transactionId invalid.");
+      return res.status(400).send("Transaction ID is invalid.");
     }
 
     const booking = await Booking.findOne({ transactionId });
 
     if (!booking) {
-      return res.status(404).send("Not find order.");
-    }
-
-    let seatsId = req.body?.seatsId || booking.seatsId;
-
-    if (!seatsId || seatsId.length === 0) {
-      console.error("Not find seat order.");
-    } else {
-      console.log("List seatObjectIds:", seatsId);
-
-      const seatObjectIds = seatsId.map(
-        (id) => new mongoose.Types.ObjectId(id)
-      );
-
-      const seatsBeforeUpdate = await SeatAvailable.find({
-        _id: { $in: seatObjectIds },
-      });
-      console.log("seats before update:", seatsBeforeUpdate);
-
-      const updateResult = await SeatAvailable.updateMany(
-        { _id: { $in: seatObjectIds } },
-        { $set: { isAvailable: false } }
-      );
+      return res.status(404).send("Booking not found.");
     }
 
     if (code === "00") {
@@ -130,10 +104,32 @@ exports.callBackVnPay = async (req, res) => {
         const qrCode = await QRCode.toDataURL(transactionId);
         booking.qrCode = qrCode;
       } catch (qrError) {
-        console.error("Error QR code:", qrError);
+        console.error("Error generating QR code:", qrError);
       }
 
       await booking.save();
+      let seatsId = req.body?.seatsId || booking.seatsId;
+      if (!seatsId || seatsId.length === 0) {
+        console.error("No seats found in booking.");
+      } else {
+        console.log("Booking success! Updating seat availability...");
+
+        const seatObjectIds = seatsId.map(
+          (id) => new mongoose.Types.ObjectId(id)
+        );
+
+        const seatsBeforeUpdate = await SeatAvailable.find({
+          _id: { $in: seatObjectIds },
+        });
+        console.log("Seats before update:", seatsBeforeUpdate);
+
+        const updateResult = await SeatAvailable.updateMany(
+          { _id: { $in: seatObjectIds } },
+          { $set: { isAvailable: false } }
+        );
+
+        console.log("Seat update result:", updateResult);
+      }
     } else {
       booking.status = "failed";
       await booking.save();
@@ -142,12 +138,11 @@ exports.callBackVnPay = async (req, res) => {
     const redirectUrl = `${process.env.FRONTEND_PREFIX}/booking/${transactionId}`;
     return res.redirect(redirectUrl);
   } catch (error) {
-    console.error("Error callBackVnPay:", error);
-    res.status(500).send("Error server");
+    console.error("Error in callBackVnPay:", error);
+    res.status(500).send("Server error");
   }
 };
 
-// Hiển thị vé sau khi thanh toán thành công
 exports.getBookingByTransactionId = async (req, res) => {
   try {
     const { transactionId } = req.params;
@@ -156,18 +151,15 @@ exports.getBookingByTransactionId = async (req, res) => {
     if (!booking) {
       return res
         .status(404)
-        .json({ success: false, message: "Not find booking!" });
+        .json({ success: false, message: "Booking not found!" });
     }
 
     res.status(200).json({ success: true, booking });
   } catch (error) {
-    console.error("Error booking:", error);
-    res.status(500).json({ success: false, message: "Error server" });
+    console.error("Error fetching booking:", error);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
-
-// Lấy danh sách vé của người dùng đã đặt
-
 exports.getUserBookings = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -199,4 +191,3 @@ exports.getUserBookings = async (req, res) => {
     res.status(500).json({ success: false, message: "Lỗi server" });
   }
 };
-

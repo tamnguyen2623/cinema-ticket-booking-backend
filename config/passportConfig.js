@@ -16,10 +16,14 @@ passport.use(
         console.log(profile)
         let user = await User.findOne({ email });
         if (!user) {
-          user = new User({ email, fullname:profile.displayName , role: "user", password: "123456" });
+          user = new User({
+            email,
+            fullname: profile.displayName,
+            role: "user",
+            password: "123456"
+          });
           await user.save();
         }
-
         return done(null, user);
       } catch (error) {
         return done(error, null);
