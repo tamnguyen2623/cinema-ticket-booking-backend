@@ -1,6 +1,5 @@
 const Room = require("../models/Room");
 const Cinema = require("../models/Cinema");
-const Seat = require("../models/Seat");
 
 exports.createRoom = async (req, res) => {
   try {
@@ -37,19 +36,19 @@ exports.createRoom = async (req, res) => {
 exports.getAllRooms = async (req, res) => {
   try {
     const { search, cinema, roomtype } = req.query;
-    let filter = { status: true };
+    let filter;
 
-    // 🛠 Lọc theo tên phòng (search)
+    // Lọc theo tên phòng (search)
     if (search) {
       filter.roomname = { $regex: search, $options: "i" };
     }
 
-    // 🛠 Lọc theo rạp chiếu
+    //  Lọc theo rạp chiếu
     if (cinema) {
       filter.cinema = cinema;
     }
 
-    // 🛠 Lọc theo loại phòng
+    // Lọc theo loại phòng
     if (roomtype) {
       filter.roomtype = roomtype;
     }
@@ -111,12 +110,30 @@ exports.deleteRoom = async (req, res) => {
       return res.status(404).json({ message: "Room not found" });
     }
 
-    room.status = false;
+    room.status = true;
     await room.save();
 
     res.status(200).json({
       message: "Room deactivated successfully, and its seats deleted",
     });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+exports.updateRoomStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+    const room = await Room.findById(req.params.id);
+
+    if (!room) {
+      return res.status(404).json({ message: "Room not found" });
+    }
+
+    room.status = status;
+    await room.save();
+
+    res.status(200).json({ message: "Room status updated successfully", room });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
