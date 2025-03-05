@@ -25,11 +25,12 @@ exports.orderByVnPay = async (req, res) => {
       currency,
     } = req.body;
     const userId = req.user?._id;
-
+    let discount = req.body.discount || 0;
     if (!userId) {
       return res.status(401).json({ message: "Unauthorized" });
     }
-
+    // voucherId = req.body.voucherId || null; // Lấy từ request
+    console.log("Voucher ID from request:", voucherId);
     const finalPrice = Number(price);
     if (isNaN(finalPrice) || finalPrice <= 0) {
       return res.status(400).json({ message: "Ticket price invalid!" });
@@ -51,6 +52,7 @@ exports.orderByVnPay = async (req, res) => {
       address,
       seatsId,
       voucherId,
+      discount,
       price: finalPrice,
       priceVND,
       cinema,
@@ -99,7 +101,7 @@ exports.callBackVnPay = async (req, res) => {
     if (!booking) {
       return res.status(404).send("Booking not found.");
     }
-
+    
     if (code === "00") {
       booking.status = "success";
       booking.paymentTime = new Date();
@@ -134,10 +136,22 @@ exports.callBackVnPay = async (req, res) => {
           { _id: { $in: seatObjectIds } },
           { $set: { isAvailable: false } }
         );
-        const updateVoucher = await Voucher.updateOne(
-          { _id: voucherId },
-          { $set: { isUsed: true } }
-        );
+        let updateVoucher = null; // Khai báo trước
+
+        if (voucherId && mongoose.Types.ObjectId.isValid(voucherId)) {
+          updateVoucher = await Voucher.updateOne(
+            { _id: new mongoose.Types.ObjectId(voucherId) },
+            { $set: { isUsed: true } }
+          );
+          console.log("Voucher update result:", updateVoucher);
+        } else {
+          console.log("Skipping voucher update, invalid voucherId:", voucherId);
+        }
+
+        // Chỉ log nếu updateVoucher có giá trị
+        if (updateVoucher) {
+          console.log("updateVoucher result:", updateVoucher);
+        }
 
         console.log("Seat update result:", updateResult);
         console.log("updateVoucher result:", updateVoucher);
