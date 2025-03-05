@@ -214,3 +214,15 @@ exports.getUserBookings = async (req, res) => {
     res.status(500).json({ success: false, message: "Lỗi server" });
   }
 };
+
+exports.getAllBooks = async (req, res) => {
+try {
+  const bookings = await Booking.find()
+    .populate("user", "fullname email roleId") // Hiển thị fullname, email, role
+    .sort({ createdAt: -1 });
+
+  res.status(200).json({ success: true, data: bookings });
+} catch (error) {
+  res.status(500).json({ success: false, message: error.message });
+}
+};
