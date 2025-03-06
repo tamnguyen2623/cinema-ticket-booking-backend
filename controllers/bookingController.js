@@ -226,3 +226,11 @@ try {
   res.status(500).json({ success: false, message: error.message });
 }
 };
+
+exports.bookingByMomo = async (req, res) => {
+
+}
+
+exports.callBackMomo = async (req, res) => {
+  
+}
