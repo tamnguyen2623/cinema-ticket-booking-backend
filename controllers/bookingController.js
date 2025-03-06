@@ -101,7 +101,7 @@ exports.callBackVnPay = async (req, res) => {
     if (!booking) {
       return res.status(404).send("Booking not found.");
     }
-    
+
     if (code === "00") {
       booking.status = "success";
       booking.paymentTime = new Date();
@@ -230,21 +230,176 @@ exports.getUserBookings = async (req, res) => {
 };
 
 exports.getAllBooks = async (req, res) => {
-try {
-  const bookings = await Booking.find()
-    .populate("user", "fullname email roleId") // Hiển thị fullname, email, role
-    .sort({ createdAt: -1 });
+  try {
+    const bookings = await Booking.find()
+      .populate("user", "fullname email roleId") // Hiển thị fullname, email, role
+      .sort({ createdAt: -1 });
 
-  res.status(200).json({ success: true, data: bookings });
-} catch (error) {
-  res.status(500).json({ success: false, message: error.message });
-}
+    res.status(200).json({ success: true, data: bookings });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
 };
 
-exports.bookingByMomo = async (req, res) => {
+exports.bookingByMomo = async () => {
+  try {
+    console.log(" API Received Data:", JSON.stringify(req.body, null, 2));
 
-}
+    let {
+      movieName,
+      cinema,
+      price,
+      seats,
+      showtime,
+      seatsId,
+      voucherId,
+      room,
+      date,
+      combo,
+      address,
+      currency,
+    } = req.body;
+    const userId = req.user?._id;
+    let discount = req.body.discount || 0;
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    console.log("Voucher ID from request:", voucherId);
+    const finalPrice = Number(price);
+    if (isNaN(finalPrice) || finalPrice <= 0) {
+      return res.status(400).json({ message: "Ticket price invalid!" });
+    }
 
-exports.callbackMomo = async (req, res) => {
-  
-}
+    const finalCurrency = currency || "VND";
+    const exchangeRate = 240;
+
+    const priceVND =
+      finalCurrency === "USD" ? finalPrice * exchangeRate : finalPrice;
+    const transactionId = Date.now() + Math.floor(Math.random() * 1000);
+
+    const newBooking = new Booking({
+      user: userId,
+      movieName,
+      showtime,
+      seats,
+      address,
+      seatsId,
+      voucherId,
+      discount,
+      price: finalPrice,
+      priceVND,
+      cinema,
+      room,
+      combo,
+      date,
+      transactionId: transactionId.toString(),
+      status: "pending",
+      currency: finalCurrency,
+    });
+
+    await newBooking.save();
+    const expireTime = new Date();
+    expireTime.setMinutes(expireTime.getMinutes() + 5);
+    var accessKey = process.env.MOMO_ACCESS_KEY;
+    var secretKey = process.env.MOMO_SECRET_KEY;
+    var orderInfo = "Pay with MoMo";
+    var partnerCode = "MOMO";
+    var redirectUrl = process.env.FRONTEND_PREFIX + `/booking`;
+    var ipnUrl = process.env.BACKEND_PREFIX + "/booking/momo/callback";
+    var requestType = "payWithCC";
+    var amount = priceVND+"";
+    var orderId = transactionId.toString();
+    var requestId = orderId;
+    var extraData = "";
+    var paymentCode = process.env.MOMO_PAYMENT_CODE;
+    var orderGroupId = "";
+    var autoCapture = true;
+    var lang = "en";
+
+    //before sign HMAC SHA256 with format
+    //accessKey=$accessKey&amount=$amount&extraData=$extraData&ipnUrl=$ipnUrl&orderId=$orderId&orderInfo=$orderInfo&partnerCode=$partnerCode&redirectUrl=$redirectUrl&requestId=$requestId&requestType=$requestType
+    var rawSignature =
+      "accessKey=" +
+      accessKey +
+      "&amount=" +
+      amount +
+      "&extraData=" +
+      extraData +
+      "&ipnUrl=" +
+      ipnUrl +
+      "&orderId=" +
+      orderId +
+      "&orderInfo=" +
+      orderInfo +
+      "&partnerCode=" +
+      partnerCode +
+      "&redirectUrl=" +
+      redirectUrl +
+      "&requestId=" +
+      requestId +
+      "&requestType=" +
+      requestType;
+
+    const crypto = require("crypto");
+    var signature = crypto
+      .createHmac("sha256", secretKey)
+      .update(rawSignature)
+      .digest("hex");
+
+    const requestBody = JSON.stringify({
+      partnerCode: partnerCode,
+      partnerName: "CINEMA",
+      storeId: "MomoTestStore",
+      requestId: requestId,
+      amount: amount,
+      orderId: orderId,
+      orderInfo: orderInfo,
+      redirectUrl: redirectUrl,
+      ipnUrl: ipnUrl,
+      lang: lang,
+      requestType: requestType,
+      autoCapture: autoCapture,
+      extraData: extraData,
+      orderGroupId: orderGroupId,
+      signature: signature,
+    });
+
+    const https = require("https");
+    const options = {
+      hostname: process.env.MOMO_HOST,
+      port: 443,
+      path: process.env.MOMO_PATH,
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Content-Length": Buffer.byteLength(requestBody),
+      },
+    };
+    
+    const req = https.request(options, (res) => {
+      res.setEncoding("utf8");
+      res.on("data", (body) => {
+        console.log("Body: ");
+        console.log(body);
+        console.log("resultCode: ");
+        console.log(JSON.parse(body).resultCode);
+      });
+      res.on("end", () => {
+        console.log("No more data in response.");
+      });
+    });
+
+    req.on("error", (e) => {
+      console.log(`problem with request: ${e.message}`);
+    });
+
+    console.log("Sending....");
+    req.write(requestBody);
+    req.end();
+  } catch (error) {
+    console.error("Error orderByVnPay:", error);
+    res.status(500).json({ message: "Error server" });
+  }
+};
+
+exports.callbackMomo = async (req, res) => {};
