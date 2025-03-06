@@ -245,6 +245,6 @@ exports.bookingByMomo = async (req, res) => {
 
 }
 
-exports.callBackMomo = async (req, res) => {
+exports.callbackMomo = async (req, res) => {
   
 }
