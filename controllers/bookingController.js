@@ -241,7 +241,7 @@ exports.getAllBooks = async (req, res) => {
   }
 };
 
-exports.bookingByMomo = async () => {
+exports.bookingByMomo = async (req, res, next) => {
   try {
     console.log(" API Received Data:", JSON.stringify(req.body, null, 2));
 
@@ -271,7 +271,7 @@ exports.bookingByMomo = async () => {
     }
 
     const finalCurrency = currency || "VND";
-    const exchangeRate = 240;
+    const exchangeRate = 24000;
 
     const priceVND =
       finalCurrency === "USD" ? finalPrice * exchangeRate : finalPrice;
@@ -302,10 +302,10 @@ exports.bookingByMomo = async () => {
     expireTime.setMinutes(expireTime.getMinutes() + 5);
     var accessKey = process.env.MOMO_ACCESS_KEY;
     var secretKey = process.env.MOMO_SECRET_KEY;
-    var orderInfo = "Pay with MoMo";
+    var orderInfo = "Your order id is " + transactionId + ", total price is " + priceVND + " VND";
     var partnerCode = "MOMO";
-    var redirectUrl = process.env.FRONTEND_PREFIX + `/booking`;
-    var ipnUrl = process.env.BACKEND_PREFIX + "/booking/momo/callback";
+    var redirectUrl = process.env.BACKEND_PREFIX + `/booking/booking/momo/callback`;
+    var ipnUrl = process.env.BACKEND_PREFIX + "/booking/booking/momo/callback";
     var requestType = "payWithCC";
     var amount = priceVND+"";
     var orderId = transactionId.toString();
@@ -376,30 +376,104 @@ exports.bookingByMomo = async () => {
       },
     };
     
-    const req = https.request(options, (res) => {
-      res.setEncoding("utf8");
-      res.on("data", (body) => {
-        console.log("Body: ");
-        console.log(body);
-        console.log("resultCode: ");
-        console.log(JSON.parse(body).resultCode);
+    const req1 = https.request(options, (res1) => {
+      res1.setEncoding("utf8");
+      res1.on("data", (body) => {
+        res.json({ success: true, paymentUrl: JSON.parse(body).payUrl });
       });
-      res.on("end", () => {
+      res1.on("end", () => {
         console.log("No more data in response.");
       });
     });
 
-    req.on("error", (e) => {
+    req1.on("error", (e) => {
       console.log(`problem with request: ${e.message}`);
     });
 
-    console.log("Sending....");
-    req.write(requestBody);
-    req.end();
+    req1.write(requestBody);
+    req1.end();
   } catch (error) {
     console.error("Error orderByVnPay:", error);
     res.status(500).json({ message: "Error server" });
   }
 };
 
-exports.callbackMomo = async (req, res) => {};
+exports.callbackMomo = async (req, res) => {
+  try {
+
+    const { resultCode: code, orderId: transactionId } = req.query;
+
+    if (!transactionId) {
+      return res.status(400).send("Transaction ID is invalid.");
+    }
+
+    const booking = await Booking.findOne({ transactionId });
+
+    if (!booking) {
+      return res.status(404).send("Booking not found.");
+    }
+
+    if (code === "0") {
+      booking.status = "success";
+      booking.paymentTime = new Date();
+
+      try {
+        const qrCode = await QRCode.toDataURL(transactionId);
+        booking.qrCode = qrCode;
+      } catch (qrError) {
+        console.error("Error generating QR code:", qrError);
+      }
+
+      await booking.save();
+    } else {
+      booking.status = "failed";
+      await booking.save();
+    }
+
+    if (booking.status === "success") {
+      let seatsId = req.body?.seatsId || booking.seatsId;
+      let voucherId = req.body?.voucherId || booking.voucherId;
+      if (!seatsId || seatsId.length === 0) {
+        console.error("No seats found in booking.");
+      } else {
+        console.log("Booking success! Updating seat availability...");
+
+        const seatObjectIds = seatsId.map(
+          (id) => new mongoose.Types.ObjectId(id)
+        );
+
+        const updateResult = await SeatAvailable.updateMany(
+          { _id: { $in: seatObjectIds } },
+          { $set: { isAvailable: false } }
+        );
+        let updateVoucher = null;
+
+        if (voucherId && mongoose.Types.ObjectId.isValid(voucherId)) {
+          updateVoucher = await Voucher.updateOne(
+            { _id: new mongoose.Types.ObjectId(voucherId) },
+            { $set: { isUsed: true } }
+          );
+          console.log("Voucher update result:", updateVoucher);
+        } else {
+          console.log("Skipping voucher update, invalid voucherId:", voucherId);
+        }
+
+        if (updateVoucher) {
+          console.log("updateVoucher result:", updateVoucher);
+        }
+
+        console.log("Seat update result:", updateResult);
+        console.log("updateVoucher result:", updateVoucher);
+      }
+    } else {
+      console.log(
+        "Booking status is not 'success'. Seat availability update skipped."
+      );
+    }
+    const redirectUrl = `${process.env.FRONTEND_PREFIX}/booking/${transactionId}`;
+    return res.redirect(redirectUrl);
+  } catch (error) {
+    console.error("Error in callBackVnPay:", error);
+    res.status(500).send("Server error");
+  }
+};
