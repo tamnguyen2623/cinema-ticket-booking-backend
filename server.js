@@ -28,6 +28,8 @@ const booking = require("./routes/booking");
 const seatAvailable = require("./routes/seatAvailable");
 const role = require("./routes/role");
 const feedback = require("./routes/feedback");
+const revenue = require("./routes/revenue");
+const user = require("./routes/user");
 mongoose.set("strictQuery", false);
 mongoose
   .connect(process.env.DATABASE)
@@ -75,6 +77,8 @@ app.use("/combo", combo);
 app.use("/seatAvailable", seatAvailable);
 app.use("/role", role);
 app.use("/feedback", feedback);
+app.use("/revenue", revenue);
+app.use("/user", user);
 
 
 app.use(passport.initialize());
