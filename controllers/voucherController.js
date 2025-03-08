@@ -1,16 +1,27 @@
 const Voucher = require("../models/Voucher.js");
 
-
 const getAllVouchers = async (req, res) => {
   try {
-    const vouchers = await Voucher.find({ isDelete: false }); 
+    const vouchers = await Voucher.find().sort({ createdAt: -1 });
     res.status(200).json({ vouchers });
   } catch (error) {
-    res.status(500).json({ error: "Internal Server Error", details: error.message });
+    res
+      .status(500)
+      .json({ error: "Internal Server Error", details: error.message });
   }
 };
 
 
+const getAllVouchersForCustomer = async (req, res) => {
+  try {
+    const vouchers = await Voucher.find({isDelete: false});
+    res.status(200).json({ vouchers });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "Internal Server Error", details: error.message });
+  }
+};
 
 const addVoucher = async (req, res) => {
   try {
@@ -25,18 +36,20 @@ const addVoucher = async (req, res) => {
       discount,
       discountType,
       expiredDate,
-      description,
       isUsed: false,
       isDelete: false,
     });
 
     await newVoucher.save();
-    res.status(201).json({ message: "Voucher added successfully", voucher: newVoucher });
+    res
+      .status(201)
+      .json({ message: "Voucher added successfully", voucher: newVoucher });
   } catch (error) {
-    res.status(500).json({ error: "Internal Server Error", details: error.message });
+    res
+      .status(500)
+      .json({ error: "Internal Server Error", details: error.message });
   }
 };
-
 
 const filterVouchers = async (req, res) => {
   try {
@@ -49,19 +62,21 @@ const filterVouchers = async (req, res) => {
     const vouchers = await Voucher.find(filters);
     res.status(200).json({ vouchers });
   } catch (error) {
-    res.status(500).json({ error: "Internal Server Error", details: error.message });
+    res
+      .status(500)
+      .json({ error: "Internal Server Error", details: error.message });
   }
 };
-
 
 const updateVoucher = async (req, res) => {
   try {
     const { id } = req.params;
-    const { code, discount, discountType, expiredDate, description, isUsed } = req.body;
+    const { code, discount, discountType, expiredDate, description, isUsed } =
+      req.body;
 
     const updatedVoucher = await Voucher.findByIdAndUpdate(
       id,
-      { code, discount, discountType, expiredDate, description, isUsed },
+      { code, discount, discountType, expiredDate, isUsed },
       { new: true }
     );
 
@@ -69,33 +84,38 @@ const updateVoucher = async (req, res) => {
       return res.status(404).json({ message: "Voucher not found" });
     }
 
-    res.status(200).json({ message: "Voucher updated successfully", voucher: updatedVoucher });
+    res.status(200).json({
+      message: "Voucher updated successfully",
+      voucher: updatedVoucher,
+    });
   } catch (error) {
-    res.status(500).json({ error: "Internal Server Error", details: error.message });
+    res
+      .status(500)
+      .json({ error: "Internal Server Error", details: error.message });
   }
 };
-
 
 const deleteVoucher = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const deletedVoucher = await Voucher.findByIdAndUpdate(
-      id,
-      { isDelete: true },
-      { new: true }
-    );
-
-    if (!deletedVoucher) {
+    const voucher = await Voucher.findById(id);
+    if (!voucher) {
       return res.status(404).json({ message: "Voucher not found" });
     }
+    voucher.isDelete = !voucher.isDelete;
+    await voucher.save();
 
-    res.status(200).json({ message: "Voucher deleted successfully", voucher: deletedVoucher });
+    res.status(200).json({
+      message: "Voucher status updated successfully",
+      voucher,
+    });
   } catch (error) {
-    res.status(500).json({ error: "Internal Server Error", details: error.message });
+    res
+      .status(500)
+      .json({ error: "Internal Server Error", details: error.message });
   }
 };
-
 
 module.exports = {
   addVoucher,
@@ -103,5 +123,5 @@ module.exports = {
   updateVoucher,
   deleteVoucher,
   getAllVouchers,
+  getAllVouchersForCustomer,
 };
-
