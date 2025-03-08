@@ -23,5 +23,11 @@ router.delete(
   authorize("admin"),
   ticketPriceController.deleteTicketPrice
 );
+router.patch(
+  "/tickets/:id/toggle-delete",
+  protect,
+  authorize("admin"),
+  ticketPriceController.toggleIsDelete
+);
 
 module.exports = router;

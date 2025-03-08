@@ -156,11 +156,7 @@ exports.register = async (req, res, next) => {
     let user;
     const userRole = await Role.findOne({ name: "user" });
     if (!userRole) {
-
-      return res
-        .status(400)
-        .json({ success: false, message: "Role 'user' not found" });
-
+      return res.status(400).json({ success: false, message: "Role 'user' not found" });
     }
 
     const foundUserByUsername = await User.findOne({ username: username });
@@ -313,11 +309,11 @@ exports.login = async (req, res, next) => {
     if (!username || !password) {
       return res.status(400).json("Please provide an username and password");
     }
-
+    
     //Check for user
     const user = await User.findOne({ username })
-      .select("+password")
-      .populate("roleId");
+    .select("+password")
+    .populate("roleId");
 
     if (!user) {
       return res.status(400).json("Invalid credentials");
@@ -333,6 +329,7 @@ exports.login = async (req, res, next) => {
     }
 
     sendTokenResponse(user, 200, res);
+
   } catch (err) {
     res.status(400).json({ success: false, message: err });
   }
@@ -341,12 +338,9 @@ exports.login = async (req, res, next) => {
 const sendTokenResponse = (user, statusCode, res) => {
   //Create token
   const token = user.getSignedJwtToken();
-
   // Lấy vai trò của user
-  const role = user.roleId.name;
-
+  const userid = user.id;
   // Cấu hình cookie
-
   const options = {
     expires: new Date(
       Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000
@@ -360,6 +354,7 @@ const sendTokenResponse = (user, statusCode, res) => {
   res.status(statusCode).cookie("token", token, options).json({
     success: true,
     role: user.roleId.name,
+    userid: userid,
     token,
   });
 };

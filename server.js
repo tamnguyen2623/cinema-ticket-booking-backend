@@ -27,6 +27,9 @@ const combo = require("./routes/combo");
 const booking = require("./routes/booking");
 const seatAvailable = require("./routes/seatAvailable");
 const role = require("./routes/role");
+const revenue = require("./routes/revenue");
+const user = require("./routes/user");
+const egift = require("./routes/egift")
 mongoose.set("strictQuery", false);
 mongoose
   .connect(process.env.DATABASE)
@@ -73,6 +76,9 @@ app.use("/movietype", movietype);
 app.use("/combo", combo);
 app.use("/seatAvailable", seatAvailable);
 app.use("/role", role);
+app.use("/revenue", revenue);
+app.use("/user", user);
+app.use("/egift", egift)
 
 
 app.use(passport.initialize());

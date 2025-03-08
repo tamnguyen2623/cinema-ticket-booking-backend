@@ -35,6 +35,19 @@ const bookingSchema = new mongoose.Schema(
       type: [String],
       required: true,
     },
+    voucherId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Voucher",
+      default: null,
+    },
+    discount: {
+      type: Number,
+      default: 0,
+    },
+    combo: {
+      type: [String],
+      default: null,
+    },
     price: {
       type: Number,
       required: true,
@@ -56,6 +69,10 @@ const bookingSchema = new mongoose.Schema(
     },
     qrCode: {
       type: String,
+    },
+    isFeedback: {
+      type: Boolean,
+      default: false,
     },
   },
   { timestamps: true }
