@@ -15,5 +15,9 @@ router.get(
   "/booking/user/:userId",
   bookingController.getUserBookings
 );
+router.put(
+  "/booking/:id",
+  bookingController.update
+);
 router.get("/admin/all",protect,authorize("admin"), bookingController.getAllBooks);
 module.exports = router;
