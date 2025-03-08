@@ -7,6 +7,10 @@ const bookingSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    movieId: {
+      type: String,
+      required: true,
+    },
     movieName: {
       type: String,
       required: true,
@@ -64,6 +68,10 @@ const bookingSchema = new mongoose.Schema(
     },
     qrCode: {
       type: String,
+    },
+    isFeedback: {
+      type: Boolean,
+      default: false
     },
   },
   { timestamps: true }

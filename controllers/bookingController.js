@@ -12,6 +12,7 @@ exports.orderByVnPay = async (req, res) => {
 
     let {
       movieName,
+      movieId,
       cinema,
       price,
       seats,
@@ -45,6 +46,7 @@ exports.orderByVnPay = async (req, res) => {
     // 🔹 Thêm vào MongoDB
     const newBooking = new Booking({
       user: userId,
+      movieId,
       movieName,
       showtime,
       seats,
@@ -189,11 +191,9 @@ exports.getUserBookings = async (req, res) => {
     }
 
     // Truy vấn các booking của user, sắp xếp theo ngày đặt mới nhất
-    const bookings = await Booking.find({ user: userId })
-      .select(
-        "movieName cinema room showtime date seats price currency status transactionId paymentTime qrCode createdAt updatedAt"
-      )
-      .sort({ createdAt: -1 });
+    const bookings = await Booking.find({ user: userId }).sort({
+      createdAt: -1,
+    });
 
     if (!bookings.length) {
       return res
@@ -213,4 +213,11 @@ exports.getUserBookings = async (req, res) => {
 
     res.status(500).json({ success: false, message: "Lỗi server" });
   }
+};
+
+// Update booking
+exports.update = (req, res, next) => {
+  Booking.updateOne({ _id: req.params.id }, req.body)
+    .then(() => res.status(200).json({ _id: req.params.id, data: req.body }))
+    .catch((error) => res.status(500).json({ message: error.message }));
 };

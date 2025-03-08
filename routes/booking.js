@@ -13,4 +13,8 @@ router.get(
   "/booking/user/:userId",
   bookingController.getUserBookings
 );
+router.put(
+  "/booking/:id",
+  bookingController.update
+);
 module.exports = router;
