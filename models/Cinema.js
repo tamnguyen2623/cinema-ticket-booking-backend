@@ -4,13 +4,9 @@ const cinemaSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      trim: true,
-      unique: true,
-      required: [true, "Please add a name"],
     },
     address: {
       type: String,
-      required: [true, "Please add address"],
     },
     isDelete: {
       type: Boolean,

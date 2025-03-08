@@ -1,18 +1,32 @@
 const Cinema = require("../models/Cinema");
 
-
 exports.getListCinemas = async (req, res, next) => {
-	try {
-		const cinemas = await Cinema.find({ isDelete: false }) 
-			.collation({ locale: 'en', strength: 2 })
-			.sort({ name: 1 });
+  try {
+    const cinemas = await Cinema.find()
+      .collation({ locale: "en", strength: 2 })
+      .sort({ name: 1 });
 
-		res.status(200).json({ success: true, count: cinemas.length, data: cinemas });
-	} catch (err) {
-		res.status(400).json({ success: false, message: err.message });
-	}
+    res
+      .status(200)
+      .json({ success: true, count: cinemas.length, data: cinemas });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
 };
 
+exports.getListCinemasForCustomer = async (req, res, next) => {
+  try {
+    const cinemas = await Cinema.find({ isDelete: false })
+      .collation({ locale: "en", strength: 2 })
+      .sort({ name: 1 });
+
+    res
+      .status(200)
+      .json({ success: true, count: cinemas.length, data: cinemas });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
 
 //@desc     GET all cinemas
 //@route    GET /cinema
@@ -173,24 +187,24 @@ exports.updateCinema = async (req, res, next) => {
 //@desc     Delete single cinema
 //@route    DELETE /cinema/:id
 //@access   Private Admin
-exports.deleteCinema = async (req, res, next) => {
-	try {
-		const cinema = await Cinema.findOneAndUpdate(
-			{ _id: req.params.id, isDelete: false },
-			{ isDelete: true },
-			{ new: true }
-		)
+exports.deleteCinema = async (req, res) => {
+  try {
+    const { id } = req.params;
 
-    if (!cinema) {
-      return res.status(400).json({
-        success: false,
-        message: `Cinema not found with id of ${req.params.id}`,
-      });
+    const cinema = await Cinema.findById(id);
+    if (!voucher) {
+      return res.status(404).json({ message: " Cinema not found" });
     }
+    cinema.isDelete = !cinema.isDelete;
+    await cinema.save();
 
-		res.status(200).json({ success: true, message: 'Cinema has been soft deleted' })
-	} catch (err) {
-		console.log(err)
-		res.status(400).json({ success: false, message: err })
-	}
-}
+    res.status(200).json({
+      message: " Cinema status updated successfully",
+      voucher,
+    });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "Internal Server Error", details: error.message });
+  }
+};

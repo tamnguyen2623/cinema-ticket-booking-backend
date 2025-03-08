@@ -2,7 +2,19 @@ const Voucher = require("../models/Voucher.js");
 
 const getAllVouchers = async (req, res) => {
   try {
-    const vouchers = await Voucher.find({ isDelete: false, isUsed: false });
+    const vouchers = await Voucher.find().sort({ createdAt: -1 });
+    res.status(200).json({ vouchers });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "Internal Server Error", details: error.message });
+  }
+};
+
+
+const getAllVouchersForCustomer = async (req, res) => {
+  try {
+    const vouchers = await Voucher.find({isDelete: false});
     res.status(200).json({ vouchers });
   } catch (error) {
     res
@@ -24,7 +36,6 @@ const addVoucher = async (req, res) => {
       discount,
       discountType,
       expiredDate,
-      description,
       isUsed: false,
       isDelete: false,
     });
@@ -65,7 +76,7 @@ const updateVoucher = async (req, res) => {
 
     const updatedVoucher = await Voucher.findByIdAndUpdate(
       id,
-      { code, discount, discountType, expiredDate, description, isUsed },
+      { code, discount, discountType, expiredDate, isUsed },
       { new: true }
     );
 
@@ -88,19 +99,16 @@ const deleteVoucher = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const deletedVoucher = await Voucher.findByIdAndUpdate(
-      id,
-      { isDelete: true },
-      { new: true }
-    );
-
-    if (!deletedVoucher) {
+    const voucher = await Voucher.findById(id);
+    if (!voucher) {
       return res.status(404).json({ message: "Voucher not found" });
     }
+    voucher.isDelete = !voucher.isDelete;
+    await voucher.save();
 
     res.status(200).json({
-      message: "Voucher deleted successfully",
-      voucher: deletedVoucher,
+      message: "Voucher status updated successfully",
+      voucher,
     });
   } catch (error) {
     res
@@ -115,4 +123,5 @@ module.exports = {
   updateVoucher,
   deleteVoucher,
   getAllVouchers,
+  getAllVouchersForCustomer,
 };
