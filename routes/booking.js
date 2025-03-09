@@ -13,5 +13,9 @@ router.get(
   "/booking/user/:userId",
   bookingController.getUserBookings
 );
+router.get('/user/total/:userId', bookingController.getTotal)
+
+router.get("/booking/ticket/:bookingId", bookingController.getTicketByBookingId);
 router.get("/admin/all",protect,authorize("admin"), bookingController.getAllBooks);
+
 module.exports = router;
