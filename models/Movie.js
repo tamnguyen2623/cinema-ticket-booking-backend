@@ -34,6 +34,11 @@ const movieSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "MovieType",
     },
+    releaseDate: {
+      type: Date,
+      required: [true, "Please add a release date"], // Bắt buộc nhập ngày phát hành
+    },
+
     actor: {
       type: String,
     }
