@@ -164,6 +164,8 @@ exports.createMovie = async (req, res, next) => {
         description: req.body.description,
         movieType: req.body.movieType,
         actor: req.body.actor,
+        releaseDate: parsedDate, // Thêm ngày phát hành
+
       };
 
       // Save the movie to the database
@@ -207,6 +209,18 @@ exports.updateMovie = async (req, res, next) => {
       const uploadedFiles = await uploadMultipleFiles(filesToUpload);
       const prevMovie = Movie.findById(req.params.id);
 
+      // Xử lý ngày phát hành
+      let releaseDate = prevMovie.releaseDate; // Mặc định giữ nguyên ngày cũ
+      if (req.body.releaseDate) {
+        const parsedDate = new Date(req.body.releaseDate);
+        if (!isNaN(parsedDate.getTime())) {
+          releaseDate = parsedDate;
+        } else {
+          return res.status(400).json({ success: false, message: "Invalid releaseDate format" });
+        }
+      }
+
+
       const movieData = {
         name: req.body.name,
         length: req.body.length,
@@ -216,6 +230,8 @@ exports.updateMovie = async (req, res, next) => {
           : prevMovie.trailer,
         description: req.body.description,
         price: req.body.price,
+        releaseDate, // Thêm ngày phát hành
+
       };
 
       const movie = await Movie.findByIdAndUpdate(req.params.id, movieData, {
@@ -251,5 +267,43 @@ exports.deleteMovie = async (req, res, next) => {
     res.status(200).json({ success: true });
   } catch (err) {
     res.status(400).json({ success: false, message: err });
+  }
+};
+
+// Lấy danh sách phim đang chiếu
+exports.getNowShowingMovies = async (req, res) => {
+  try {
+    const now = new Date();
+
+    const movies = await Movie.find({
+      releaseDate: { $lt: now } // Chỉ lấy phim có ngày phát hành lớn hơn hôm nay
+    }).populate("movieType");
+    res.status(200).json({
+      success: true,
+      count: movies.length,
+      data: movies,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Lấy danh sách phim sắp chiếu
+exports.getUpcomingMovies = async (req, res) => {
+  try {
+    const now = new Date();
+
+    // Lấy danh sách phim có lịch chiếu trong tương lai
+    const movies = await Movie.find({
+      releaseDate: { $gt: now } // Chỉ lấy phim có ngày phát hành lớn hơn hôm nay
+    }).populate("movieType");
+
+    res.status(200).json({
+      success: true,
+      count: movies.length,
+      data: movies,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 };
