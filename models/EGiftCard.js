@@ -8,7 +8,7 @@ const EGiftSchema = new mongoose.Schema(
     image: {
       type: String,
     },
-    desription: {
+    description: {
       type: String,
     },
     isDelete: {

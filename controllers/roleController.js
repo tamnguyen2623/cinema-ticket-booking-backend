@@ -104,8 +104,8 @@ exports.getEmployeeById = async (req, res) => {
 // Tạo Employee mới
 exports.createEmployee = async (req, res) => {
     try {
-        const { roleId, username, email,  fullname } = req.body;
-        const user = await User.create({ roleId, username, email,  fullname });
+        const { roleId, username, email, fullname } = req.body;
+        const user = await User.create({ roleId, username, email, fullname });
 
         // Populate để hiển thị tên role
         const populatedUser = await User.findById(user._id).populate("roleId", "name");
@@ -140,7 +140,7 @@ exports.deleteEmployee = async (req, res) => {
         if (!user) {
             return res.status(404).json({ success: false, message: "User not found" });
         }
-user.isDelete = true;
+        user.isDelete = true;
         res.status(200).json({ success: true, message: "User deleted successfully" });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });

@@ -361,152 +361,152 @@ const sendTokenResponse = (user, statusCode, res) => {
   });
 };
 
-  exports.getTickets = async (req, res, next) => {
-    try {
-      const user = await User.findById(req.user.id, { tickets: 1 }).populate({
-        path: "tickets.showtime",
-        populate: [
-          "movie",
-          {
-            path: "theater",
-            populate: { path: "cinema", select: "name" },
-            select: "cinema number",
-          },
-        ],
-        select: "theater movie showtime isRelease",
-      });
+exports.getTickets = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id, { tickets: 1 }).populate({
+      path: "tickets.showtime",
+      populate: [
+        "movie",
+        {
+          path: "theater",
+          populate: { path: "cinema", select: "name" },
+          select: "cinema number",
+        },
+      ],
+      select: "theater movie showtime isRelease",
+    });
 
-      res.status(200).json({
-        success: true,
-        data: user,
-      });
-    } catch (err) {
-      res.status(400).json({ success: false, message: err });
+    res.status(200).json({
+      success: true,
+      data: user,
+    });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err });
+  }
+};
+
+exports.logout = async (req, res, next) => {
+  try {
+    res.cookie("token", "none", {
+      expires: new Date(Date.now() + 10 * 1000),
+      httpOnly: true,
+    });
+
+    res.status(200).json({
+      success: true,
+    });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err });
+  }
+};
+
+exports.getAll = async (req, res, next) => {
+  try {
+    const user = await User.find().populate({
+      path: "tickets.showtime",
+      populate: [
+        "movie",
+        {
+          path: "theater",
+          populate: { path: "cinema", select: "name" },
+          select: "cinema number",
+        },
+      ],
+      select: "theater movie showtime isRelease",
+    });
+
+    res.status(200).json({
+      success: true,
+      data: user,
+    });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err });
+  }
+};
+
+exports.deleteUser = async (req, res, next) => {
+  try {
+    const user = await User.findByIdAndDelete(req.params.id);
+
+    if (!user) {
+      return res.status(400).json({ success: false });
     }
-  };
+    res.status(200).json({ success: true });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err });
+  }
+};
 
-  exports.logout = async (req, res, next) => {
-    try {
-      res.cookie("token", "none", {
-        expires: new Date(Date.now() + 10 * 1000),
-        httpOnly: true,
+exports.updateUser = async (req, res, next) => {
+  try {
+    const user = await User.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: `User not found with id of ${req.params.id}`,
       });
-
-      res.status(200).json({
-        success: true,
-      });
-    } catch (err) {
-      res.status(400).json({ success: false, message: err });
     }
-  };
+    res.status(200).json({ success: true, data: user });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err });
+  }
+};
 
-  exports.getAll = async (req, res, next) => {
-    try {
-      const user = await User.find().populate({
-        path: "tickets.showtime",
-        populate: [
-          "movie",
-          {
-            path: "theater",
-            populate: { path: "cinema", select: "name" },
-            select: "cinema number",
-          },
-        ],
-        select: "theater movie showtime isRelease",
-      });
-
-      res.status(200).json({
-        success: true,
-        data: user,
-      });
-    } catch (err) {
-      res.status(400).json({ success: false, message: err });
+exports.getQROfTicket = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id);
+    const ticket = user.tickets.find((ticket) => {
+      return ticket._id.toString() === req.params.id;
+    });
+    if (!ticket) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Ticket not found" });
     }
-  };
+    res.json({ qr: ticket.qr });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err });
+  }
+};
 
-  exports.deleteUser = async (req, res, next) => {
-    try {
-      const user = await User.findByIdAndDelete(req.params.id);
+exports.googleCallback = async (req, res) => {
+  try {
+    const user = req.user;
 
-      if (!user) {
-        return res.status(400).json({ success: false });
-      }
-      res.status(200).json({ success: true });
-    } catch (err) {
-      res.status(400).json({ success: false, message: err });
+    if (!user) {
+      return res
+        .status(400)
+        .json({ success: false, message: "User not authenticated" });
     }
-  };
 
-  exports.updateUser = async (req, res, next) => {
-    try {
-      const user = await User.findByIdAndUpdate(req.params.id, req.body, {
-        new: true,
-        runValidators: true,
-      });
+    const token = user.getSignedJwtToken();
 
-      if (!user) {
-        return res.status(400).json({
-          success: false,
-          message: `User not found with id of ${req.params.id}`,
-        });
-      }
-      res.status(200).json({ success: true, data: user });
-    } catch (err) {
-      res.status(400).json({ success: false, message: err });
-    }
-  };
+    res.cookie("token", token, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Lax",
+      maxAge: 24 * 60 * 60 * 1000,
+    });
 
-  exports.getQROfTicket = async (req, res, next) => {
-    try {
-      const user = await User.findById(req.user.id);
-      const ticket = user.tickets.find((ticket) => {
-        return ticket._id.toString() === req.params.id;
-      });
-      if (!ticket) {
-        return res
-          .status(404)
-          .json({ success: false, message: "Ticket not found" });
-      }
-      res.json({ qr: ticket.qr });
-    } catch (err) {
-      res.status(400).json({ success: false, message: err });
-    }
-  };
-
-  exports.googleCallback = async (req, res) => {
-    try {
-      const user = req.user;
-
-      if (!user) {
-        return res
-          .status(400)
-          .json({ success: false, message: "User not authenticated" });
-      }
-
-      const token = user.getSignedJwtToken();
-
-      res.cookie("token", token, {
-        httpOnly: false,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "Lax",
-        maxAge: 24 * 60 * 60 * 1000,
-      });
-
-      res.redirect(process.env.FRONTEND_PREFIX + "/login");
-    } catch (error) {
-      console.error("Error in Google callback:", error);
-      res.status(500).json({ success: false, message: "Server error" });
-    }
-  };
-  exports.addUser = async (req, res) => {
-    const { username, fullname, password } = req.body;
-    try {
-      const user = await User.create(username, fullname, password);
-      res.status(201).json({ success: true, data: user });
-    } catch (err) {
-      res.status(400).json({ success: false, message: err.message });
-    }
-  };
+    res.redirect(process.env.FRONTEND_PREFIX + "/login");
+  } catch (error) {
+    console.error("Error in Google callback:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+exports.addUser = async (req, res) => {
+  const { username, fullname, password } = req.body;
+  try {
+    const user = await User.create(username, fullname, password);
+    res.status(201).json({ success: true, data: user });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
 
 const upload = multer();
 
@@ -557,13 +557,24 @@ exports.uploadAvatar = async (req, res) => {
     }
   });
 };
+// exports.getMe = async (req, res, next) => {
+//   try {
+//     // const user = await User.findById(req.user.id)
+//     const user = await User.findById(req.user.id).populate('roleId');
+//     if (!user) {
+//       return res.status(400).json({ success: false, message: "User not found" });
+//     }
+//     res.status(200).json({
+//       success: true,
+//       data: user
+//     });
+//   } catch (err) {
+//     res.status(400).json({ success: false, message: err });
+//   }
+// };
 exports.getMe = async (req, res, next) => {
   try {
-    // const user = await User.findById(req.user.id)
     const user = await User.findById(req.user.id).populate('roleId');
-if(!user) {
-      return res.status(400).json({ success: false, message: "User not found" });
-    }
     res.status(200).json({
       success: true,
       data: user
