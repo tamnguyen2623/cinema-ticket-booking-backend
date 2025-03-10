@@ -7,10 +7,18 @@ const bookingSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    movieId: {
+      type: String,
+      required: true,
+    },
     movieName: {
       type: String,
       required: true,
     },
+    movieImage: {
+      type: String,
+    },
+
     cinema: {
       type: String,
       required: true,
@@ -36,8 +44,13 @@ const bookingSchema = new mongoose.Schema(
       required: true,
     },
     voucherId: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Voucher",
       default: null,
+    },
+    discount: {
+      type: Number,
+      default: 0,
     },
     combo: {
       type: [String],
@@ -64,6 +77,10 @@ const bookingSchema = new mongoose.Schema(
     },
     qrCode: {
       type: String,
+    },
+    isFeedback: {
+      type: Boolean,
+      default: false
     },
   },
   { timestamps: true }
