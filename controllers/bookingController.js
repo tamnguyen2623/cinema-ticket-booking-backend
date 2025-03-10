@@ -8,7 +8,6 @@ require("dotenv");
 const Booking = require("../models/Booking");
 const SeatAvailable = require("../models/SeatAvailables");
 const Voucher = require("../models/Voucher");
-const { transporter } = require("../config/mailConfig");
 const Movie = require("../models/Movie");
 
 exports.orderByVnPay = async (req, res) => {
