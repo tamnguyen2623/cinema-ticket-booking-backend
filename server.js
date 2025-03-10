@@ -86,8 +86,6 @@ passport.use(
             isVerified: true,
           });
           await user.save();
-        } else {
-          return done(null, user);
         }
 
         return done(null, user);
