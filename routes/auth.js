@@ -17,6 +17,7 @@ const {
   changeUsername,
   getOtpForgetPassword,
   verifyOtp,
+  uploadAvatar,
 } = require("../controllers/authController");
 const passport = require("passport");
 const router = express.Router();
@@ -60,5 +61,8 @@ router.get(
   passport.authenticate("facebook", { failureRedirect: "/", session: false }),
   googleCallback
 );
+
+// router.put('/avatar', authController.uploadAvatar);
+router.post("/upload-avatar", protect, uploadAvatar);
 
 module.exports = router;
