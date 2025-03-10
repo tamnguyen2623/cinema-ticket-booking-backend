@@ -30,6 +30,7 @@ const role = require("./routes/role");
 const feedback = require("./routes/feedback");
 const revenue = require("./routes/revenue");
 const user = require("./routes/user");
+const egift = require("./routes/egift")
 mongoose.set("strictQuery", false);
 mongoose
   .connect(process.env.DATABASE)
@@ -79,6 +80,7 @@ app.use("/role", role);
 app.use("/feedback", feedback);
 app.use("/revenue", revenue);
 app.use("/user", user);
+app.use("/egift", egift)
 
 
 app.use(passport.initialize());
