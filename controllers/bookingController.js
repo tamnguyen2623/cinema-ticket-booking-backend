@@ -292,6 +292,7 @@ exports.bookingByMomo = async (req, res, next) => {
       movieName,
       cinema,
       price,
+      movieId,
       seats,
       showtime,
       seatsId,
@@ -323,6 +324,7 @@ exports.bookingByMomo = async (req, res, next) => {
     const newBooking = new Booking({
       user: userId,
       movieName,
+      movieId,
       showtime,
       seats,
       address,

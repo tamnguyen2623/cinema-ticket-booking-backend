@@ -153,6 +153,7 @@ exports.createMovie = async (req, res, next) => {
     }
 
     try {
+      const parsedDate = new Date(req.body.releaseDate);
       // Upload files to S3 using multipart upload
       const uploadedFiles = await uploadMultipleFiles(filesToUpload);
       // Create a new movie object with the URLs from the uploaded files
