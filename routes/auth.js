@@ -51,6 +51,17 @@ router.get(
   googleCallback
 );
 
+router.get(
+  "/facebook",
+  passport.authenticate("facebook", { scope: "email" })
+);
+
+router.get(
+  "/facebook/callback",
+  passport.authenticate("facebook", { failureRedirect: "/", session: false }),
+  googleCallback
+);
+
 // router.put('/avatar', authController.uploadAvatar);
 router.post("/upload-avatar", protect, uploadAvatar);
 
