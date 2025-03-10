@@ -1,6 +1,8 @@
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const User = require("../models/User");
+const Role = require("../models/Role");
+
 require("dotenv").config();
 
 passport.use(
@@ -14,12 +16,14 @@ passport.use(
       try {
         const email = profile.emails[0].value;
         console.log(profile)
+        const userRole = await Role.findOne({ name: "user" });
+
         let user = await User.findOne({ email });
         if (!user) {
           user = new User({
             email,
             fullname: profile.displayName,
-            role: "user",
+            roleId: userRole._id,
             password: "123456"
           });
           await user.save();

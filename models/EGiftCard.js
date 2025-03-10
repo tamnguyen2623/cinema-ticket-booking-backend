@@ -2,14 +2,14 @@ const mongoose = require("mongoose");
 
 const EGiftSchema = new mongoose.Schema(
   {
-    giftNumber: {
-      type: Date,
+    name: {
+      type: String,
     },
-    expirationDate: {
-      type: Number,
+    image: {
+      type: String,
     },
-    balance: {
-      type: Number,
+    description: {
+      type: String,
     },
     isDelete: {
       type: Boolean,
