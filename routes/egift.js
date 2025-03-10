@@ -1,5 +1,5 @@
 const express = require('express');
-const { createEGift, updateEGift, softDeleteEGift, getAllEGifts, getActiveEGifts, updateIsDelete, getEGiftById } = require('../controllers/EGiftController');
+const { createEGift, updateEGift, softDeleteEGift, getAllEGifts, getActiveEGifts, updateIsDelete, getEGiftById, sendEGiftToUser } = require('../controllers/EGiftController');
 
 const router = express.Router();
 
@@ -10,5 +10,6 @@ router.get('/egifts', getAllEGifts);
 router.put('/updateIsDelete/:id', updateIsDelete);
 router.get('/egifts/active', getActiveEGifts);
 router.get('/egifts/:id', getEGiftById);
+router.post('/egift-cards/send', sendEGiftToUser);
 
 module.exports = router;
