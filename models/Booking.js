@@ -15,6 +15,10 @@ const bookingSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    movieImage: {
+      type: String,
+    },
+
     cinema: {
       type: String,
       required: true,

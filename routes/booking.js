@@ -15,9 +15,10 @@ router.get(
   "/booking/user/:userId",
   bookingController.getUserBookings
 );
-router.put(
-  "/booking/:id",
-  bookingController.update
-);
+router.get('/user/total/:userId', bookingController.getTotal)
+
+router.get("/booking/ticket/:bookingId", bookingController.getTicketByBookingId);
+
 router.get("/admin/all",protect,authorize("admin"), bookingController.getAllBooks);
+
 module.exports = router;
