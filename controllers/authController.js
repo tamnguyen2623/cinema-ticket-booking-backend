@@ -505,10 +505,11 @@ exports.googleCallback = async (req, res) => {
 
     res.redirect(process.env.FRONTEND_PREFIX + "/login");
   } catch (error) {
-    console.error("Error in Google callback:", error);
+    console.error("Error in callback:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
 exports.addUser = async (req, res) => {
   const { username, fullname, password } = req.body;
   try {
