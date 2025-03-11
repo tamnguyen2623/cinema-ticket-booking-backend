@@ -220,7 +220,7 @@ exports.getUserBookings = async (req, res) => {
     // Truy vấn các booking của user, sắp xếp theo ngày đặt mới nhất
     const bookings = await Booking.find({ user: userId })
       .select(
-        "movieName   movieImage cinema room showtime date seats price currency status transactionId paymentTime qrCode createdAt updatedAt"
+        "movieName  movieImage cinema room showtime date seats price currency status transactionId paymentTime qrCode createdAt updatedAt"
       )
       .sort({ createdAt: -1 });
 
@@ -343,7 +343,9 @@ const sendConfirmationEmail = async (email, booking) => {
         </tr>
         <tr>
           <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Date:</strong></td>
-          <td style="padding: 8px; border-bottom: 1px solid #ddd;">${new Date(booking.date).toLocaleDateString("en-GB")}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #ddd;">  ${new Date(booking.date).toLocaleDateString("vi-VN")}
+</td>
+
         </tr>
         <tr>
           <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Seat(s):</strong></td>

@@ -164,9 +164,14 @@ exports.createMovie = async (req, res, next) => {
         description: req.body.description,
         movieType: req.body.movieType,
         actor: req.body.actor,
-        releaseDate: parsedDate, // Thêm ngày phát hành
+        releaseDate: req.body.parsedDate, // Thêm ngày phát hành
 
       };
+      console.log("Request Headers:", req.headers);
+      console.log("Request Body:", req.body);
+      console.log("Uploaded Files:", req.files);
+      console.log("Files to Upload:", filesToUpload);
+
 
       // Save the movie to the database
       const movie = await Movie.create(movieData);
