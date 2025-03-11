@@ -12,6 +12,12 @@ const cinemaSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    phoneNumber: {
+      type: String,
+    },
+    map: {
+      type: String,
+    },
   },
   { timestamps: true }
 );

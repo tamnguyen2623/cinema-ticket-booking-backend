@@ -557,21 +557,7 @@ exports.uploadAvatar = async (req, res) => {
     }
   });
 };
-// exports.getMe = async (req, res, next) => {
-//   try {
-//     // const user = await User.findById(req.user.id)
-//     const user = await User.findById(req.user.id).populate('roleId');
-//     if (!user) {
-//       return res.status(400).json({ success: false, message: "User not found" });
-//     }
-//     res.status(200).json({
-//       success: true,
-//       data: user
-//     });
-//   } catch (err) {
-//     res.status(400).json({ success: false, message: err });
-//   }
-// };
+
 exports.getMe = async (req, res, next) => {
   try {
     const user = await User.findById(req.user.id).populate('roleId');
@@ -579,6 +565,24 @@ exports.getMe = async (req, res, next) => {
       success: true,
       data: user
     });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err });
+  }
+};
+exports.updateProfile = async (req, res, next) => {
+  try {
+    const user = await User.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: `User not found with id of ${req.params.id}`,
+      });
+    }
+    res.status(200).json({ success: true, data: user });
   } catch (err) {
     res.status(400).json({ success: false, message: err });
   }

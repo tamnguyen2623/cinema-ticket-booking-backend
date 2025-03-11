@@ -18,6 +18,7 @@ const {
   getOtpForgetPassword,
   verifyOtp,
   uploadAvatar,
+  updateProfile,
 } = require("../controllers/authController");
 const passport = require("passport");
 const router = express.Router();
@@ -30,6 +31,8 @@ router.post("/resendotp", resendOtp);
 router.post("/login", login);
 router.get("/logout", logout);
 router.get("/me", protect, getMe);
+router.put("/profile/user/:id", protect, updateProfile);
+
 router.post("/change-password", protect, changePassword);
 router.post("/change-username", protect, changeUsername);
 router.post("/forget-password/getOtp", getOtpForgetPassword);
