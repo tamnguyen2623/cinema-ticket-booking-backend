@@ -2,11 +2,12 @@ const { ProductCode, VnpLocale, dateFormat } = require("vnpay");
 const mongoose = require("mongoose");
 const { vnpay } = require("../config/vnpayConfig");
 const QRCode = require("qrcode");
+const { randomUUID } = require("crypto");
+const { transporter } = require("../config/mailConfig");
 require("dotenv");
 const Booking = require("../models/Booking");
 const SeatAvailable = require("../models/SeatAvailables");
 const Voucher = require("../models/Voucher");
-const { transporter } = require("../config/mailConfig");
 const Movie = require("../models/Movie");
 
 exports.orderByVnPay = async (req, res) => {
@@ -36,7 +37,7 @@ exports.orderByVnPay = async (req, res) => {
 
     // 🔹 Tìm phim theo `name` để lấy `img`
     const movie = await Movie.findOne({ name: movieName }).select("img");
-    const movieImage = movie?.img;u
+    const movieImage = movie?.img;
 
     // voucherId = req.body.voucherId || null; // Lấy từ request
     console.log("Voucher ID from request:", voucherId);
@@ -125,6 +126,28 @@ exports.callBackVnPay = async (req, res) => {
       }
 
       await booking.save();
+      let seatsId = req.body?.seatsId || booking.seatsId;
+      if (!seatsId || seatsId.length === 0) {
+        console.error("No seats found in booking.");
+      } else {
+        console.log("Booking success! Updating seat availability...");
+
+        const seatObjectIds = seatsId.map(
+          (id) => new mongoose.Types.ObjectId(id)
+        );
+
+        const seatsBeforeUpdate = await SeatAvailable.find({
+          _id: { $in: seatObjectIds },
+        });
+        console.log("Seats before update:", seatsBeforeUpdate);
+
+        const updateResult = await SeatAvailable.updateMany(
+          { _id: { $in: seatObjectIds } },
+          { $set: { isAvailable: false } }
+        );
+
+        console.log("Seat update result:", updateResult);
+      }
     } else {
       booking.status = "failed";
       await booking.save();
@@ -150,6 +173,7 @@ exports.callBackVnPay = async (req, res) => {
         if (user?.email) {
           await sendConfirmationEmail(user.email, booking);
         }
+
 
         const updateResult = await SeatAvailable.updateMany(
           { _id: { $in: seatObjectIds } },
@@ -188,7 +212,6 @@ exports.callBackVnPay = async (req, res) => {
   }
 };
 
-// Hiển thị vé sau khi thanh toán thành công
 exports.getBookingByTransactionId = async (req, res) => {
   try {
     const { transactionId } = req.params;
@@ -197,18 +220,15 @@ exports.getBookingByTransactionId = async (req, res) => {
     if (!booking) {
       return res
         .status(404)
-        .json({ success: false, message: "Not find booking!" });
+        .json({ success: false, message: "Booking not found!" });
     }
 
     res.status(200).json({ success: true, booking });
   } catch (error) {
-    console.error("Error booking:", error);
-    res.status(500).json({ success: false, message: "Error server" });
+    console.error("Error fetching booking:", error);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
-
-// Lấy danh sách vé của người dùng đã đặt
-
 exports.getUserBookings = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -654,4 +674,11 @@ const sendConfirmationEmail = async (email, booking) => {
   } catch (error) {
     console.error("Lỗi gửi email xác nhận:", error);
   }
+};
+
+// Update booking
+exports.update = (req, res, next) => {
+  Booking.updateOne({ _id: req.params.id }, req.body)
+    .then(() => res.status(200).json({ _id: req.params.id, data: req.body }))
+    .catch((error) => res.status(500).json({ message: error.message }));
 };

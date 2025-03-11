@@ -18,6 +18,7 @@ const {
   getOtpForgetPassword,
   verifyOtp,
   uploadAvatar,
+  updateProfile,
 } = require("../controllers/authController");
 const passport = require("passport");
 const router = express.Router();
@@ -30,6 +31,8 @@ router.post("/resendotp", resendOtp);
 router.post("/login", login);
 router.get("/logout", logout);
 router.get("/me", protect, getMe);
+router.put("/profile/user/:id", protect, updateProfile);
+
 router.post("/change-password", protect, changePassword);
 router.post("/change-username", protect, changeUsername);
 router.post("/forget-password/getOtp", getOtpForgetPassword);
@@ -37,7 +40,6 @@ router.post("/forget-password/verifyOtp", verifyOtp);
 router.get("/tickets", protect, getTickets);
 router.get("/tickets/qr/:id", protect, getQROfTicket);
 router.put("/user/:id", protect, authorize("admin"), updateUser);
-// router.get("/user/:id", protect, authorize("admin"), updateUser);
 router.get("/user", protect, authorize("admin"), getAll);
 router.get("/user/total", protect, authorize("admin"), countUsers);
 router.delete("/user/:id", protect, authorize("admin"), deleteUser);
@@ -48,6 +50,17 @@ router.get(
 router.get(
   "/google/callback",
   passport.authenticate("google", { failureRedirect: "/" }),
+  googleCallback
+);
+
+router.get(
+  "/facebook",
+  passport.authenticate("facebook", { scope: "email" })
+);
+
+router.get(
+  "/facebook/callback",
+  passport.authenticate("facebook", { failureRedirect: "/", session: false }),
   googleCallback
 );
 
