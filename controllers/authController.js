@@ -2,7 +2,9 @@ const { transporter } = require("../config/mailConfig");
 const User = require("../models/User");
 const Role = require("../models/Role");
 const bcrypt = require("bcryptjs");
+const multer = require("multer");
 require("dotenv").config();
+const { uploadMultipleFiles } = require("./fileController");
 
 function generateRandomString() {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -309,11 +311,11 @@ exports.login = async (req, res, next) => {
     if (!username || !password) {
       return res.status(400).json("Please provide an username and password");
     }
-    
+
     //Check for user
     const user = await User.findOne({ username })
-    .select("+password")
-    .populate("roleId");
+      .select("+password")
+      .populate("roleId");
 
     if (!user) {
       return res.status(400).json("Invalid credentials");
@@ -359,162 +361,214 @@ const sendTokenResponse = (user, statusCode, res) => {
   });
 };
 
+  exports.getTickets = async (req, res, next) => {
+    try {
+      const user = await User.findById(req.user.id, { tickets: 1 }).populate({
+        path: "tickets.showtime",
+        populate: [
+          "movie",
+          {
+            path: "theater",
+            populate: { path: "cinema", select: "name" },
+            select: "cinema number",
+          },
+        ],
+        select: "theater movie showtime isRelease",
+      });
+
+      res.status(200).json({
+        success: true,
+        data: user,
+      });
+    } catch (err) {
+      res.status(400).json({ success: false, message: err });
+    }
+  };
+
+  exports.logout = async (req, res, next) => {
+    try {
+      res.cookie("token", "none", {
+        expires: new Date(Date.now() + 10 * 1000),
+        httpOnly: true,
+      });
+
+      res.status(200).json({
+        success: true,
+      });
+    } catch (err) {
+      res.status(400).json({ success: false, message: err });
+    }
+  };
+
+  exports.getAll = async (req, res, next) => {
+    try {
+      const user = await User.find().populate({
+        path: "tickets.showtime",
+        populate: [
+          "movie",
+          {
+            path: "theater",
+            populate: { path: "cinema", select: "name" },
+            select: "cinema number",
+          },
+        ],
+        select: "theater movie showtime isRelease",
+      });
+
+      res.status(200).json({
+        success: true,
+        data: user,
+      });
+    } catch (err) {
+      res.status(400).json({ success: false, message: err });
+    }
+  };
+
+  exports.deleteUser = async (req, res, next) => {
+    try {
+      const user = await User.findByIdAndDelete(req.params.id);
+
+      if (!user) {
+        return res.status(400).json({ success: false });
+      }
+      res.status(200).json({ success: true });
+    } catch (err) {
+      res.status(400).json({ success: false, message: err });
+    }
+  };
+
+  exports.updateUser = async (req, res, next) => {
+    try {
+      const user = await User.findByIdAndUpdate(req.params.id, req.body, {
+        new: true,
+        runValidators: true,
+      });
+
+      if (!user) {
+        return res.status(400).json({
+          success: false,
+          message: `User not found with id of ${req.params.id}`,
+        });
+      }
+      res.status(200).json({ success: true, data: user });
+    } catch (err) {
+      res.status(400).json({ success: false, message: err });
+    }
+  };
+
+  exports.getQROfTicket = async (req, res, next) => {
+    try {
+      const user = await User.findById(req.user.id);
+      const ticket = user.tickets.find((ticket) => {
+        return ticket._id.toString() === req.params.id;
+      });
+      if (!ticket) {
+        return res
+          .status(404)
+          .json({ success: false, message: "Ticket not found" });
+      }
+      res.json({ qr: ticket.qr });
+    } catch (err) {
+      res.status(400).json({ success: false, message: err });
+    }
+  };
+
+  exports.googleCallback = async (req, res) => {
+    try {
+      const user = req.user;
+
+      if (!user) {
+        return res
+          .status(400)
+          .json({ success: false, message: "User not authenticated" });
+      }
+
+      const token = user.getSignedJwtToken();
+
+      res.cookie("token", token, {
+        httpOnly: false,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "Lax",
+        maxAge: 24 * 60 * 60 * 1000,
+      });
+
+      res.redirect(process.env.FRONTEND_PREFIX + "/login");
+    } catch (error) {
+      console.error("Error in Google callback:", error);
+      res.status(500).json({ success: false, message: "Server error" });
+    }
+  };
+  exports.addUser = async (req, res) => {
+    const { username, fullname, password } = req.body;
+    try {
+      const user = await User.create(username, fullname, password);
+      res.status(201).json({ success: true, data: user });
+    } catch (err) {
+      res.status(400).json({ success: false, message: err.message });
+    }
+  };
+
+const upload = multer();
+
+exports.uploadAvatar = async (req, res) => {
+  upload.single("avatar")(req, res, async function (error) {
+    if (error) {
+      return res.status(500).json({ success: false, message: "File upload error" });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: "No avatar file provided" });
+    }
+
+    try {
+      // Upload ảnh lên S3
+      const uploadedFile = await uploadMultipleFiles([req.file]);
+      // const avatarUrl = uploadedFile["avatar"];
+      const avatarUrl = Object.values(uploadedFile)[0]; // Lấy URL đầu tiên từ object
+
+      console.log("Uploaded File:", uploadedFile);
+
+      // Cập nhật avatar của Customer
+      const updatedUser = await User.findByIdAndUpdate(
+        req.user._id,
+        { avatar: avatarUrl },
+        { new: true } // Trả về user sau khi cập nhật
+      );
+
+      res.json({
+        success: true,
+        message: "Avatar uploaded successfully",
+        avatar: avatarUrl,
+        user: updatedUser, // Trả về user sau khi cập nhật
+      });
+
+      // customer.avatar = avatarUrl;
+      // await customer.save();
+
+      // user.avatar = avatarUrl;
+      // await user.markModified("avatar"); // Đánh dấu avatar đã thay đổi
+      // await user.save();
+      // console.log("Updated Customer:", user);
+
+
+      // res.status(200).json({ success: true, message: "Avatar uploaded successfully", avatar: avatarUrl });
+    } catch (err) {
+      res.status(400).json({ success: false, message: err.message });
+    }
+  });
+};
 exports.getMe = async (req, res, next) => {
   try {
+    // const user = await User.findById(req.user.id)
     const user = await User.findById(req.user.id).populate('roleId');
+if(!user) {
+      return res.status(400).json({ success: false, message: "User not found" });
+    }
     res.status(200).json({
       success: true,
       data: user
     });
   } catch (err) {
     res.status(400).json({ success: false, message: err });
-  }
-};
-
-
-exports.getTickets = async (req, res, next) => {
-  try {
-    const user = await User.findById(req.user.id, { tickets: 1 }).populate({
-      path: "tickets.showtime",
-      populate: [
-        "movie",
-        {
-          path: "theater",
-          populate: { path: "cinema", select: "name" },
-          select: "cinema number",
-        },
-      ],
-      select: "theater movie showtime isRelease",
-    });
-
-    res.status(200).json({
-      success: true,
-      data: user,
-    });
-  } catch (err) {
-    res.status(400).json({ success: false, message: err });
-  }
-};
-
-exports.logout = async (req, res, next) => {
-  try {
-    res.cookie("token", "none", {
-      expires: new Date(Date.now() + 10 * 1000),
-      httpOnly: true,
-    });
-
-    res.status(200).json({
-      success: true,
-    });
-  } catch (err) {
-    res.status(400).json({ success: false, message: err });
-  }
-};
-
-exports.getAll = async (req, res, next) => {
-  try {
-    const user = await User.find().populate({
-      path: "tickets.showtime",
-      populate: [
-        "movie",
-        {
-          path: "theater",
-          populate: { path: "cinema", select: "name" },
-          select: "cinema number",
-        },
-      ],
-      select: "theater movie showtime isRelease",
-    });
-
-    res.status(200).json({
-      success: true,
-      data: user,
-    });
-  } catch (err) {
-    res.status(400).json({ success: false, message: err });
-  }
-};
-
-exports.deleteUser = async (req, res, next) => {
-  try {
-    const user = await User.findByIdAndDelete(req.params.id);
-
-    if (!user) {
-      return res.status(400).json({ success: false });
-    }
-    res.status(200).json({ success: true });
-  } catch (err) {
-    res.status(400).json({ success: false, message: err });
-  }
-};
-
-exports.updateUser = async (req, res, next) => {
-  try {
-    const user = await User.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
-
-    if (!user) {
-      return res.status(400).json({
-        success: false,
-        message: `User not found with id of ${req.params.id}`,
-      });
-    }
-    res.status(200).json({ success: true, data: user });
-  } catch (err) {
-    res.status(400).json({ success: false, message: err });
-  }
-};
-
-exports.getQROfTicket = async (req, res, next) => {
-  try {
-    const user = await User.findById(req.user.id);
-    const ticket = user.tickets.find((ticket) => {
-      return ticket._id.toString() === req.params.id;
-    });
-    if (!ticket) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Ticket not found" });
-    }
-    res.json({ qr: ticket.qr });
-  } catch (err) {
-    res.status(400).json({ success: false, message: err });
-  }
-};
-
-exports.googleCallback = async (req, res) => {
-  try {
-    const user = req.user;
-
-    if (!user) {
-      return res
-        .status(400)
-        .json({ success: false, message: "User not authenticated" });
-    }
-
-    const token = user.getSignedJwtToken();
-
-    res.cookie("token", token, {
-      httpOnly: false,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "Lax",
-      maxAge: 24 * 60 * 60 * 1000,
-    });
-
-    res.redirect(process.env.FRONTEND_PREFIX + "/login");
-  } catch (error) {
-    console.error("Error in Google callback:", error);
-    res.status(500).json({ success: false, message: "Server error" });
-  }
-};
-exports.addUser = async (req, res) => {
-  const { username, fullname, password } = req.body;
-  try {
-    const user = await User.create(username, fullname, password);
-    res.status(201).json({ success: true, data: user });
-  } catch (err) {
-    res.status(400).json({ success: false, message: err.message });
   }
 };

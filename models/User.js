@@ -47,7 +47,7 @@ const userSchema = new mongoose.Schema({
   },
   tickets: [
     {
-      showtime: { type: mongoose.Schema.ObjectId, ref: "Showtime" },
+      showtime: { type: mongoose.Schema.ObjectId, ref: "Booking" },
       seats: [
         {
           row: { type: String },
@@ -59,6 +59,12 @@ const userSchema = new mongoose.Schema({
       ticketId: String,
     },
   ],
+  avatar: { 
+    type: String, 
+    default: "" 
+  }, // Trường lưu URL avatar
+
+
   createdAt: {
     type: Date,
     default: Date.now,

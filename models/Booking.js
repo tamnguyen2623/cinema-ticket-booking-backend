@@ -7,10 +7,18 @@ const bookingSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    movieId: {
+      type: String,
+      required: true,
+    },
     movieName: {
       type: String,
       required: true,
     },
+    movieImage: {
+      type: String,
+    },
+
     cinema: {
       type: String,
       required: true,
@@ -72,7 +80,7 @@ const bookingSchema = new mongoose.Schema(
     },
     isFeedback: {
       type: Boolean,
-      default: false,
+      default: false
     },
   },
   { timestamps: true }
