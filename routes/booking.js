@@ -11,14 +11,20 @@ router.get(
   "/booking/:transactionId",
   bookingController.getBookingByTransactionId
 );
+router.get("/booking/user/:userId", bookingController.getUserBookings);
+router.get("/user/total/:userId", bookingController.getTotal);
+
 router.get(
-  "/booking/user/:userId",
-  bookingController.getUserBookings
+  "/booking/ticket/:bookingId",
+  bookingController.getTicketByBookingId
 );
-router.get('/user/total/:userId', bookingController.getTotal)
 
-router.get("/booking/ticket/:bookingId", bookingController.getTicketByBookingId);
-
-router.get("/admin/all",protect,authorize("admin"), bookingController.getAllBooks);
+router.get(
+  "/admin/all",
+  protect,
+  authorize("admin"),
+  bookingController.getAllBooks
+);
+router.put("/booking/:id", bookingController.update);
 
 module.exports = router;

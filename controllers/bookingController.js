@@ -37,8 +37,7 @@ exports.orderByVnPay = async (req, res) => {
 
     // 🔹 Tìm phim theo `name` để lấy `img`
     const movie = await Movie.findOne({ name: movieName }).select("img");
-    const movieImage = movie?.img
-
+    const movieImage = movie?.img;
 
     // voucherId = req.body.voucherId || null; // Lấy từ request
     console.log("Voucher ID from request:", voucherId);
@@ -166,12 +165,15 @@ exports.callBackVnPay = async (req, res) => {
         const seatObjectIds = seatsId.map(
           (id) => new mongoose.Types.ObjectId(id)
         );
-        const user = await mongoose.model("User").findById(booking.user).select("email");
-        
+        const user = await mongoose
+          .model("User")
+          .findById(booking.user)
+          .select("email");
+
         if (user?.email) {
           await sendConfirmationEmail(user.email, booking);
         }
-        
+
         const updateResult = await SeatAvailable.updateMany(
           { _id: { $in: seatObjectIds } },
           { $set: { isAvailable: false } }
@@ -239,10 +241,10 @@ exports.getUserBookings = async (req, res) => {
     }
 
     // Truy vấn các booking của user, sắp xếp theo ngày đặt mới nhất
- 
-    const bookings = await Booking.find({ user: userId })
-      .sort({ createdAt: -1 });
 
+    const bookings = await Booking.find({ user: userId }).sort({
+      createdAt: -1,
+    });
 
     if (!bookings.length) {
       return res
@@ -264,7 +266,7 @@ exports.getUserBookings = async (req, res) => {
   }
 };
 // tính tiền các vẽ đã thanh toán thành công
-exports.getTotal = async(req, res, next)=>{
+exports.getTotal = async (req, res, next) => {
   try {
     const { userId } = req.params;
     console.log("Fetching bookings for user:", userId);
@@ -273,11 +275,14 @@ exports.getTotal = async(req, res, next)=>{
       return res
         .status(400)
         .json({ success: false, message: "Thiếu thông tin userId." });
-    }/// Tìm các đơn hàng thành công
+    } /// Tìm các đơn hàng thành công
     const bookings = await Booking.find({ user: userId, status: "success" });
 
     // Tính tổng số tiền
-    const totalSpent = bookings.reduce((sum, booking) => sum + booking.price, 0);
+    const totalSpent = bookings.reduce(
+      (sum, booking) => sum + booking.price,
+      0
+    );
 
     // ✅ Phải gửi phản hồi JSON cho API
     res.json({ success: true, userId, totalSpent });
@@ -286,7 +291,6 @@ exports.getTotal = async(req, res, next)=>{
     res.status(500).json({ success: false, message: "Lỗi server!" });
   }
 };
-  
 
 exports.getAllBooks = async (req, res) => {
   try {
@@ -361,12 +365,18 @@ exports.bookingByMomo = async (req, res, next) => {
     expireTime.setMinutes(expireTime.getMinutes() + 5);
     var accessKey = process.env.MOMO_ACCESS_KEY;
     var secretKey = process.env.MOMO_SECRET_KEY;
-    var orderInfo = "Your order id is " + transactionId + ", total price is " + priceVND + " VND";
+    var orderInfo =
+      "Your order id is " +
+      transactionId +
+      ", total price is " +
+      priceVND +
+      " VND";
     var partnerCode = "MOMO";
-    var redirectUrl = process.env.BACKEND_PREFIX + `/booking/booking/momo/callback`;
+    var redirectUrl =
+      process.env.BACKEND_PREFIX + `/booking/booking/momo/callback`;
     var ipnUrl = process.env.BACKEND_PREFIX + "/booking/booking/momo/callback";
     var requestType = "payWithCC";
-    var amount = priceVND+"";
+    var amount = priceVND + "";
     var orderId = transactionId.toString();
     var requestId = orderId;
     var extraData = "";
@@ -434,7 +444,7 @@ exports.bookingByMomo = async (req, res, next) => {
         "Content-Length": Buffer.byteLength(requestBody),
       },
     };
-    
+
     const req1 = https.request(options, (res1) => {
       res1.setEncoding("utf8");
       res1.on("data", (body) => {
@@ -459,7 +469,6 @@ exports.bookingByMomo = async (req, res, next) => {
 
 exports.callbackMomo = async (req, res) => {
   try {
-
     const { resultCode: code, orderId: transactionId } = req.query;
 
     if (!transactionId) {
@@ -537,22 +546,24 @@ exports.callbackMomo = async (req, res) => {
   }
 };
 
-
 exports.getTicketByBookingId = async (req, res) => {
   try {
-       const { bookingId } = req.params; 
+    const { bookingId } = req.params;
 
     if (!bookingId) {
-      return res.status(400).json({ success: false, message: "Thiếu bookingId!" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Thiếu bookingId!" });
     }
 
     const booking = await Booking.findOne({ _id: bookingId })
       .populate("user", "fullname email")
-      .populate("voucherId", "discount code")
-      
+      .populate("voucherId", "discount code");
 
     if (!booking) {
-      return res.status(404).json({ success: false, message: "Không tìm thấy vé!" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy vé!" });
     }
 
     res.status(200).json({ success: true, data: booking });
@@ -564,10 +575,16 @@ exports.getTicketByBookingId = async (req, res) => {
 const sendConfirmationEmail = async (email, booking) => {
   try {
     // Lấy thông tin người dùng từ booking
-    const user = await mongoose.model("User").findById(booking.user).select("fullname");
+    const user = await mongoose
+      .model("User")
+      .findById(booking.user)
+      .select("fullname");
     const fullname = user?.fullname || "Khách hàng";
-   const voucher = await mongoose.model("Voucher").findById(booking.voucherId).select("discount");
-   const discount = voucher?.discount || 0;
+    const voucher = await mongoose
+      .model("Voucher")
+      .findById(booking.voucherId)
+      .select("discount");
+    const discount = voucher?.discount || 0;
     // Chuyển đổi thời gian về múi giờ địa phương
     const localTime = new Date(booking.showtime).toLocaleString("vi-VN", {
       timeZone: "Asia/Ho_Chi_Minh",
@@ -589,11 +606,15 @@ const sendConfirmationEmail = async (email, booking) => {
       <table style="width: 100%; border-collapse: collapse; margin-top: 15px;font-size: 15px">
         <tr>
           <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Movie:</strong></td>
-          <td style="padding: 8px; border-bottom: 1px solid #ddd;">${booking.movieName}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #ddd;">${
+            booking.movieName
+          }</td>
         </tr>
         <tr>
           <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Cinema:</strong></td>
-          <td style="padding: 8px; border-bottom: 1px solid #ddd;">${booking.cinema}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #ddd;">${
+            booking.cinema
+          }</td>
         </tr>
         <tr>
           <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Showtime:</strong></td>
@@ -601,27 +622,39 @@ const sendConfirmationEmail = async (email, booking) => {
         </tr>
         <tr>
           <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Date:</strong></td>
-          <td style="padding: 8px; border-bottom: 1px solid #ddd;">${new Date(booking.date).toLocaleDateString("en-GB")}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #ddd;">${new Date(
+            booking.date
+          ).toLocaleDateString("en-GB")}</td>
         </tr>
         <tr>
           <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Seat(s):</strong></td>
-          <td style="padding: 8px; border-bottom: 1px solid #ddd;">${booking.seats.join(", ")}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #ddd;">${booking.seats.join(
+            ", "
+          )}</td>
         </tr>
         <tr>
           <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Room:</strong></td>
-          <td style="padding: 8px; border-bottom: 1px solid #ddd;">${booking.room}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #ddd;">${
+            booking.room
+          }</td>
         </tr>
         <tr>
           <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Price:</strong></td>
-          <td style="padding: 8px; border-bottom: 1px solid #ddd;">${booking.price} ${booking.currency}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #ddd;">${
+            booking.price
+          } ${booking.currency}</td>
         </tr>
         <tr>
           <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Payment time:</strong></td>
-          <td style="padding: 8px; border-bottom: 1px solid #ddd;">${booking.paymentTime} </td>
+          <td style="padding: 8px; border-bottom: 1px solid #ddd;">${
+            booking.paymentTime
+          } </td>
         </tr>
         <tr>
           <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Combo:</strong></td>
-          <td style="padding: 8px; border-bottom: 1px solid #ddd;">${booking.combo || "No Combo"}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #ddd;">${
+            booking.combo || "No Combo"
+          }</td>
         </tr>
         <tr>
           <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Voucher Discount:</strong></td>
@@ -639,4 +672,11 @@ const sendConfirmationEmail = async (email, booking) => {
   } catch (error) {
     console.error("Lỗi gửi email xác nhận:", error);
   }
+};
+
+// Update booking
+exports.update = (req, res, next) => {
+  Booking.updateOne({ _id: req.params.id }, req.body)
+    .then(() => res.status(200).json({ _id: req.params.id, data: req.body }))
+    .catch((error) => res.status(500).json({ message: error.message }));
 };
