@@ -587,3 +587,67 @@ exports.updateProfile = async (req, res, next) => {
     res.status(400).json({ success: false, message: err });
   }
 };
+
+
+exports.googleCallbacks = async (req, res) => {
+  try {
+    const user = req.user;
+
+    if (!user) {
+      return res
+        .status(400)
+        .json({ success: false, message: "User not authenticated" });
+    }
+
+    if (!user.isVerified) {
+      return res.redirect(`${process.env.FRONTEND_PREFIX}/verifyotpregistergoogle?email=${encodeURIComponent(user.email)}`);
+    }
+    const token = user.getSignedJwtToken();
+
+    res.cookie("token", token, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Lax",
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+
+    res.redirect(process.env.FRONTEND_PREFIX + "/login");
+  } catch (error) {
+    console.error("Error in Google callback:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+exports.googleLogin = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    if (!user.isVerified) {
+      return res.status(400).json({ success: false, message: "User is not verified" });
+    }
+
+    const token = user.getSignedJwtToken();
+
+    res.cookie("token", token, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Lax",
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Login successful",
+      token,
+      user
+    });
+  } catch (error) {
+    console.error("Error in Google login:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};

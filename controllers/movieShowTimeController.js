@@ -67,7 +67,7 @@ exports.deleteMovieShowTime = async (req, res) => {
 
 exports.filterMovieShowTimes = async (req, res) => {
   try {
-    const showTimes = await MovieShowTime.find({ isDelete: false })
+    const showTimes = await MovieShowTime.find()
       .populate("movieId")
       .populate("showtimeId")
       .populate("cinemaId")

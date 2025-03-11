@@ -16,11 +16,15 @@ router
   .post(addMovieShowTime);
 
 router.route("/list").get(getShowTimesBySelection);
-
+router.put(
+  "/:id",
+  protect,
+  authorize("admin"),
+  deleteMovieShowTime
+);
 router
   .route("/:id")
   .get(getMovieShowTimeById)
-  .put(updateMovieShowTime)
-  .delete(deleteMovieShowTime);
+  .put(updateMovieShowTime);
 
 module.exports = router;

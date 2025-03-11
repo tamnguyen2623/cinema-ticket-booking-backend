@@ -14,7 +14,7 @@ const { protect, authorize } = require("../middleware/auth");
 router.post("/add", protect, authorize("admin"), addVoucher);
 router.get("/filter", filterVouchers);
 router.put("/update/:id", updateVoucher);
-router.delete("/delete/:id", deleteVoucher);
+router.put("/delete/:id", deleteVoucher);
 router.get("/list", getAllVouchers);
 
 module.exports = router;
