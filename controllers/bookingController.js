@@ -136,7 +136,7 @@ exports.callBackVnPay = async (req, res) => {
           { _id: { $in: seatObjectIds } },
           { $set: { isAvailable: false } }
         );
-        let updateVoucher = null; // Khai báo trước
+        let updateVoucher = null; 
 
         if (voucherId && mongoose.Types.ObjectId.isValid(voucherId)) {
           updateVoucher = await Voucher.updateOne(
@@ -148,7 +148,6 @@ exports.callBackVnPay = async (req, res) => {
           console.log("Skipping voucher update, invalid voucherId:", voucherId);
         }
 
-        // Chỉ log nếu updateVoucher có giá trị
         if (updateVoucher) {
           console.log("updateVoucher result:", updateVoucher);
         }
