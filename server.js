@@ -1,6 +1,7 @@
 const express = require("express");
 const passport = require("passport");
 require("./config/passportConfig");
+const FacebookStrategy = require("passport-facebook").Strategy;
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
@@ -9,6 +10,8 @@ const mongoSanitize = require("express-mongo-sanitize");
 const helmet = require("helmet");
 const xss = require("xss-clean");
 require("dotenv").config();
+const User = require("./models/User");
+const Role = require("./models/Role");
 
 const auth = require("./routes/auth");
 const cinema = require("./routes/cinema");
@@ -27,6 +30,9 @@ const combo = require("./routes/combo");
 const booking = require("./routes/booking");
 const seatAvailable = require("./routes/seatAvailable");
 const role = require("./routes/role");
+const feedback = require("./routes/feedback");
+const revenue = require("./routes/revenue");
+const user = require("./routes/user");
 mongoose.set("strictQuery", false);
 mongoose
   .connect(process.env.DATABASE)
@@ -54,6 +60,42 @@ app.use(mongoSanitize());
 app.use(helmet());
 app.use(xss());
 
+passport.use(
+  new FacebookStrategy(
+    {
+      clientID: process.env.FACEBOOK_KEY,
+      clientSecret: process.env.FACEBOOK_SECRET,
+      callbackURL: process.env.FACEBOOK_CALLBACK_URL,
+      profileFields: ["id", "emails", "name"], // Lấy email, tên
+    },
+    async (accessToken, refreshToken, profile, done) => {
+      try {
+        let user = await User.findOne({ email: profile.emails?.[0]?.value });
+        const userRole = await Role.findOne({ name: "user" });
+        if (!userRole) {
+          return res
+            .status(400)
+            .json({ success: false, message: "Role 'user' not found" });
+        }
+
+        if (!user) {
+          user = new User({
+            email: profile.emails?.[0]?.value || "",
+            fullname: profile.name.familyName + " " + profile.name.givenName,
+            roleId: userRole._id,
+            isVerified: true,
+          });
+          await user.save();
+        }
+
+        return done(null, user);
+      } catch (err) {
+        return done(err, null);
+      }
+    }
+  )
+);
+
 app.use("/booking", booking);
 app.use("/movieshowing", movieshowing);
 app.use("/room", room);
@@ -73,7 +115,9 @@ app.use("/movietype", movietype);
 app.use("/combo", combo);
 app.use("/seatAvailable", seatAvailable);
 app.use("/role", role);
-
+app.use("/feedback", feedback);
+app.use("/revenue", revenue);
+app.use("/user", user);
 
 app.use(passport.initialize());
 const port = process.env.PORT || 8080;

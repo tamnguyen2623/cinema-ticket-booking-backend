@@ -1,9 +1,10 @@
 const express = require('express');
-const { callBackVnPay, getOrders, exportOrdersToExcelFile, countOrders, totalRevenueV2, countOrdersByCinema, getTotalRevenueByCinema, getTotalRevenueByMonth, getTotalRevenueByMovie } = require('../controllers/orderController');
+const { callBackVnPay, getOrders, exportOrdersToExcelFile, countOrders, totalRevenueV2, countOrdersByCinema, getTotalRevenueByCinema, getTotalRevenueByMonth } = require('../controllers/orderController');
 
 const router = express.Router();
 
 const { protect, authorize } = require("../middleware/auth");
+const { getTotalRevenueByMovie } = require('../controllers/revenueController');
 
 // router.get('/call-back/vnpay', callBackVnPay);
 router.get('/admin/orders', protect, authorize('admin'), getOrders);

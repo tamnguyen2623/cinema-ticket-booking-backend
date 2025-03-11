@@ -569,7 +569,6 @@ exports.getTotalRevenueByMonthV2 = async (req, res) => {
       },
     ]);
 
-    // Chuyển đổi kết quả thành đủ 12 tháng, nếu tháng nào không có doanh thu thì set về 0
     const result = Array.from({ length: 12 }, (_, i) => {
       const monthData = revenueByMonth.find((m) => m._id === i + 1);
       return monthData ? monthData.totalRevenue : 0;
@@ -578,7 +577,7 @@ exports.getTotalRevenueByMonthV2 = async (req, res) => {
     return result;
   } catch (error) {
     console.error("Error calculating revenue by month:", error);
-    return Array(12).fill(0); // Nếu lỗi, trả về mảng 12 tháng với giá trị 0
+    return Array(12).fill(0);
   }
 };
 
@@ -606,7 +605,6 @@ exports.getTotalRevenueByMovie = async (req, res, next) => {
     },
   ]);
 
-  // Format kết quả thành dạng categories (tên phim) và totalRevenue
   const categories = results.map(item => item.movieName);
   const totalRevenue = results.map(item => item.totalRevenue);
 

@@ -1,157 +1,71 @@
 const Cinema = require("../models/Cinema");
 
-
-exports.getListCinemas = async (req, res, next) => {
-	try {
-		const cinemas = await Cinema.find({ isDelete: false }) 
-			.collation({ locale: 'en', strength: 2 })
-			.sort({ name: 1 });
-
-		res.status(200).json({ success: true, count: cinemas.length, data: cinemas });
-	} catch (err) {
-		res.status(400).json({ success: false, message: err.message });
-	}
-};
-
-
 //@desc     GET all cinemas
 //@route    GET /cinema
 //@access   Public
-
-exports.getCinemas = async (req, res, next) => {
+exports.getListCinemas = async (req, res) => {
   try {
-    const cinemas = await Cinema.find().populate("movieId").populate("roomId"); // ✅ Lấy dữ liệu trước
+    const cinemas = await Cinema.find()
+      .collation({ locale: "en", strength: 2 })
+      .sort({ name: 1 });
 
-    res.status(200).json({
-      // ✅ Sau đó mới gửi response
-      success: true,
-      count: cinemas.length,
-      data: cinemas,
-    });
+    res.status(200).json({ success: true, count: cinemas.length, data: cinemas });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
   }
 };
 
-// exports.getCinemas = async (req, res, next) => {
-//   try {
-//     const cinemas = await Cinema.find()
-//       .populate("movieId")
-//       .populate({
-//         path: "theaters",
-//         populate: {
-//           path: "showtimes",
-//           populate: { path: "movie", select: "name length" },
-//           select: "movie showtime isRelease",
-//         },
-//         select: "number seatPlan showtimes",
-//       })
-//       .collation({ locale: "en", strength: 2 })
-//       .sort({ name: 1 })
-//       .then((cinemas) => {
-//         cinemas.forEach((cinema) => {
-//           cinema.theaters.forEach((theater) => {
-//             theater.showtimes = theater.showtimes.filter(
-//               (showtime) => showtime.isRelease
-//             );
-//           });
-//         });
-//         return cinemas;
-//       });
-
-//     res
-//       .status(200)
-//       .json({ success: true, count: cinemas.length, data: cinemas });
-//   } catch (err) {
-//     res.status(400).json({ success: false, message: err });
-//   }
-// };
-
-//@desc     GET all cinemas with all unreleased showtime
-//@route    GET /cinema/unreleased
-//@access   Private admin
-exports.getUnreleasedCinemas = async (req, res, next) => {
+//@desc     GET all active cinemas (not deleted)
+//@route    GET /cinema/active
+//@access   Public
+exports.getListCinemasForCustomer = async (req, res) => {
   try {
-    const cinemas = await Cinema.find()
-      .populate({
-        path: "theaters",
-        populate: {
-          path: "showtimes",
-          populate: { path: "movie", select: "name length" },
-          select: "movie showtime isRelease",
-        },
-        select: "number seatPlan showtimes",
-      })
+    const cinemas = await Cinema.find({ isDelete: false })
       .collation({ locale: "en", strength: 2 })
       .sort({ name: 1 });
 
-    res
-      .status(200)
-      .json({ success: true, count: cinemas.length, data: cinemas });
+    res.status(200).json({ success: true, count: cinemas.length, data: cinemas });
   } catch (err) {
-    res.status(400).json({ success: false, message: err });
+    res.status(400).json({ success: false, message: err.message });
   }
 };
 
 //@desc     GET single cinema
 //@route    GET /cinema/:id
 //@access   Public
-exports.getCinema = async (req, res, next) => {
+exports.getCinema = async (req, res) => {
   try {
-    const cinema = await Cinema.findById(req.params.id)
-      .populate({
-        path: "theaters",
-        populate: {
-          path: "showtimes",
-          populate: { path: "movie", select: "name length" },
-          select: "movie showtime isRelease",
-        },
-        select: "number seatPlan showtimes",
-      })
-
-      .then((cinemas) => {
-        cinemas.forEach((cinema) => {
-          cinema.theaters.forEach((theater) => {
-            theater.showtimes = theater.showtimes.filter(
-              (showtime) => showtime.isRelease
-            );
-          });
-        });
-        return cinemas;
-      });
+    const cinema = await Cinema.findById(req.params.id);
 
     if (!cinema) {
-      return res.status(400).json({
+      return res.status(404).json({
         success: false,
-        message: `Cinema not found with id of ${req.params.id}`,
+        message: `Cinema not found with id ${req.params.id}`,
       });
     }
 
     res.status(200).json({ success: true, data: cinema });
   } catch (err) {
-    res.status(400).json({ success: false, message: err });
+    res.status(400).json({ success: false, message: err.message });
   }
 };
 
-//@desc     Create cinema
+//@desc     Create a new cinema
 //@route    POST /cinema
 //@access   Private
-exports.createCinema = async (req, res, next) => {
+exports.createCinema = async (req, res) => {
   try {
     const cinema = await Cinema.create(req.body);
-    res.status(201).json({
-      success: true,
-      data: cinema,
-    });
+    res.status(201).json({ success: true, data: cinema });
   } catch (err) {
-    res.status(400).json({ success: false, message: err });
+    res.status(400).json({ success: false, message: err.message });
   }
 };
 
-//@desc     Update cinemas
+//@desc     Update cinema
 //@route    PUT /cinema/:id
 //@access   Private Admin
-exports.updateCinema = async (req, res, next) => {
+exports.updateCinema = async (req, res) => {
   try {
     const cinema = await Cinema.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
@@ -159,38 +73,35 @@ exports.updateCinema = async (req, res, next) => {
     });
 
     if (!cinema) {
-      return res.status(400).json({
+      return res.status(404).json({
         success: false,
-        message: `Cinema not found with id of ${req.params.id}`,
+        message: `Cinema not found with id ${req.params.id}`,
       });
     }
+
     res.status(200).json({ success: true, data: cinema });
   } catch (err) {
-    res.status(400).json({ success: false, message: err });
+    res.status(400).json({ success: false, message: err.message });
   }
 };
 
-//@desc     Delete single cinema
+//@desc     Soft delete (toggle isDelete status) a cinema
 //@route    DELETE /cinema/:id
 //@access   Private Admin
-exports.deleteCinema = async (req, res, next) => {
-	try {
-		const cinema = await Cinema.findOneAndUpdate(
-			{ _id: req.params.id, isDelete: false },
-			{ isDelete: true },
-			{ new: true }
-		)
+exports.deleteCinema = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const cinema = await Cinema.findById(id);
 
     if (!cinema) {
-      return res.status(400).json({
-        success: false,
-        message: `Cinema not found with id of ${req.params.id}`,
-      });
+      return res.status(404).json({ success: false, message: "Cinema not found" });
     }
 
-		res.status(200).json({ success: true, message: 'Cinema has been soft deleted' })
-	} catch (err) {
-		console.log(err)
-		res.status(400).json({ success: false, message: err })
-	}
-}
+    cinema.isDelete = !cinema.isDelete;
+    await cinema.save();
+
+    res.status(200).json({ success: true, message: "Cinema status updated", data: cinema });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

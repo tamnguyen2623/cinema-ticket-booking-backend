@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 // Get all movie types
 exports.getMovieTypes = async (req, res, next) => {
     try {
-        const movieTypes = await MovieType.find({ isDelete: false });
+        const movieTypes = await MovieType.find();
         res.status(200).json({ success: true, data: movieTypes });
     } catch (err) {
         res.status(400).json({ success: false, message: err.message });
@@ -62,6 +62,11 @@ exports.updateMovieType = async (req, res, next) => {
     } catch (err) {
         res.status(400).json({ success: false, message: err.message });
     }
+};
+exports.updateIsDelete = async (req, res, next) => {
+    MovieType.updateOne({ _id: req.params.id }, req.body)
+        .then(() => res.status(200).json({ _id: req.params.id, data: req.body }))
+        .catch((error) => res.status(500).json({ message: error.message }));
 };
 
 // Soft delete movie type
