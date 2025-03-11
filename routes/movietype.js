@@ -6,6 +6,7 @@ const {
     createMovieType,
     updateMovieType,
     deleteMovieType,
+    updateIsDelete,
 } = require("../controllers/movietypeController");
 const { protect, authorize } = require("../middleware/auth");
 
@@ -22,6 +23,12 @@ router.put(
     protect,
     authorize("admin"),
     updateMovieType
+);
+router.put(
+    "/updateIsDelete/:id",
+    protect,
+    authorize("admin"),
+    updateIsDelete
 );
 router.delete(
     "/:id",

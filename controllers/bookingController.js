@@ -2,11 +2,12 @@ const { ProductCode, VnpLocale, dateFormat } = require("vnpay");
 const mongoose = require("mongoose");
 const { vnpay } = require("../config/vnpayConfig");
 const QRCode = require("qrcode");
+const { randomUUID } = require("crypto");
+const { transporter } = require("../config/mailConfig");
 require("dotenv");
 const Booking = require("../models/Booking");
 const SeatAvailable = require("../models/SeatAvailables");
 const Voucher = require("../models/Voucher");
-const { transporter } = require("../config/mailConfig");
 const Movie = require("../models/Movie");
 
 exports.orderByVnPay = async (req, res) => {
@@ -126,6 +127,28 @@ exports.callBackVnPay = async (req, res) => {
       }
 
       await booking.save();
+      let seatsId = req.body?.seatsId || booking.seatsId;
+      if (!seatsId || seatsId.length === 0) {
+        console.error("No seats found in booking.");
+      } else {
+        console.log("Booking success! Updating seat availability...");
+
+        const seatObjectIds = seatsId.map(
+          (id) => new mongoose.Types.ObjectId(id)
+        );
+
+        const seatsBeforeUpdate = await SeatAvailable.find({
+          _id: { $in: seatObjectIds },
+        });
+        console.log("Seats before update:", seatsBeforeUpdate);
+
+        const updateResult = await SeatAvailable.updateMany(
+          { _id: { $in: seatObjectIds } },
+          { $set: { isAvailable: false } }
+        );
+
+        console.log("Seat update result:", updateResult);
+      }
     } else {
       booking.status = "failed";
       await booking.save();
@@ -187,7 +210,6 @@ exports.callBackVnPay = async (req, res) => {
   }
 };
 
-// Hiển thị vé sau khi thanh toán thành công
 exports.getBookingByTransactionId = async (req, res) => {
   try {
     const { transactionId } = req.params;
@@ -196,18 +218,15 @@ exports.getBookingByTransactionId = async (req, res) => {
     if (!booking) {
       return res
         .status(404)
-        .json({ success: false, message: "Not find booking!" });
+        .json({ success: false, message: "Booking not found!" });
     }
 
     res.status(200).json({ success: true, booking });
   } catch (error) {
-    console.error("Error booking:", error);
-    res.status(500).json({ success: false, message: "Error server" });
+    console.error("Error fetching booking:", error);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
-
-// Lấy danh sách vé của người dùng đã đặt
-
 exports.getUserBookings = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -222,9 +241,6 @@ exports.getUserBookings = async (req, res) => {
     // Truy vấn các booking của user, sắp xếp theo ngày đặt mới nhất
  
     const bookings = await Booking.find({ user: userId })
-      .select(
-        "movieName   movieImage cinema room showtime date seats price currency status transactionId paymentTime qrCode createdAt updatedAt"
-      )
       .sort({ createdAt: -1 });
 
 
