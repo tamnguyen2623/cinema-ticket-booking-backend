@@ -19,6 +19,8 @@ const {
   verifyOtp,
   uploadAvatar,
   updateProfile,
+  googleCallbacks,
+  googleLogin,
 } = require("../controllers/authController");
 const passport = require("passport");
 const router = express.Router();
@@ -43,6 +45,8 @@ router.put("/user/:id", protect, authorize("admin"), updateUser);
 router.get("/user", protect, authorize("admin"), getAll);
 router.get("/user/total", protect, authorize("admin"), countUsers);
 router.delete("/user/:id", protect, authorize("admin"), deleteUser);
+
+
 router.get(
   "/google",
   passport.authenticate("google", { scope: ["profile", "email"] })
@@ -53,11 +57,20 @@ router.get(
   googleCallback
 );
 
+
+router.post("/googlelogin", googleLogin);
+router.get("/google/register", passport.authenticate("google-register", { scope: ["profile", "email"] }));
+router.get(
+  "/google/register/callback",
+  passport.authenticate("google-register", { failureRedirect: "/", session: false }),
+  googleCallbacks
+);
+
+
 router.get(
   "/facebook",
   passport.authenticate("facebook", { scope: "email" })
 );
-
 router.get(
   "/facebook/callback",
   passport.authenticate("facebook", { failureRedirect: "/", session: false }),
