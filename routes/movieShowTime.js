@@ -17,7 +17,7 @@ router
 
 router.route("/list").get(getShowTimesBySelection);
 router.put(
-  "/:id",
+  "/:id/active",
   protect,
   authorize("admin"),
   deleteMovieShowTime
