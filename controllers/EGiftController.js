@@ -1,3 +1,4 @@
+const { transporter } = require("../config/mailConfig");
 const EGift = require("../models/EGiftCard");
 const multer = require("multer");
 const { uploadMultipleFiles } = require("./fileController");
@@ -161,17 +162,51 @@ exports.sendEGiftToUser = async (req, res) => {
         .status(404)
         .json({ success: false, message: "User not found" });
     }
+
+    const cardNumber = Math.floor(
+      100000000 + Math.random() * 900000000
+    ).toString();
+    const pin = Math.floor(1000 + Math.random() * 9000).toString();
+
     const owningCard = await OwningCard.create({
       user: user._id,
       egift: egift._id,
-      cardNumber: Math.random().toString(36).substr(2, 9),
+      cardNumber: cardNumber,
       expiryDate: new Date(
         new Date().setFullYear(new Date().getFullYear() + 1)
       ),
       balance: balance,
-      pin: Math.random().toString(36).substr(2, 4),
+      pin: pin,
     });
 
+    const mailOptions = {
+      from: process.env.MAIL_ACCOUNT,
+      to: email,
+      subject: `🎁 ${user.fullname} has sent you a special E-Gift Card!`,
+      html: `
+      <div style="background: linear-gradient(to right, #ece9e6, #ffffff); padding: 30px; text-align: center; font-family: Arial, sans-serif;">
+        <div style="max-width: 600px; background-color: #ffffff; border-radius: 12px; padding: 25px; margin: auto; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
+          
+          <h2 style="color: #333;">🎉 Hello, <span style="color: #007bff;">${fullName}</span>!</h2>
+          <p style="color: #666; font-size: 16px;">You have received a special E-Gift Card from <strong>${user.fullname}</strong>! 🎁</p>
+  
+          <div style="background: #f8f9fa; border-left: 5px solid #007bff; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <p style="color: #555; font-style: italic;">"${message}"</p>
+          </div>
+  
+          <div style="background: #ffffff; border-radius: 10px; padding: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); text-align: left;">
+            <h3 style="color: #333; text-align: center;">🎁 Your Gift Card Details</h3>
+            <p style="color: #555;"><strong>💳 Card Number:</strong> ${cardNumber}</p>
+            <p style="color: #555;"><strong>💰 Balance:</strong> $${balance}</p>
+            <p style="color: #555;"><strong>🔑 PIN:</strong> ${pin}</p>
+          </div>
+ 
+          <img src="${egift.image}" alt="EGift Card" style="max-width: 100%; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+        </div>
+      </div>
+    `,
+    };
+    await transporter.sendMail(mailOptions);
     res.status(200).json({ success: true, data: owningCard });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
