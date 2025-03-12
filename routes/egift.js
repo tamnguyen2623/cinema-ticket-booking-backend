@@ -10,6 +10,6 @@ router.get('/egifts', getAllEGifts);
 router.put('/updateIsDelete/:id', updateIsDelete);
 router.get('/egifts/active', getActiveEGifts);
 router.get('/egifts/:id', getEGiftById);
-router.post('/egift-cards/send', sendEGiftToUser);
+router.post('/egift-cards/send/:id', sendEGiftToUser);
 
 module.exports = router;
