@@ -2,6 +2,7 @@ const EGift = require("../models/EGiftCard");
 const multer = require("multer");
 const { uploadMultipleFiles } = require("./fileController");
 const OwningCard = require("../models/OwningCard");
+const User = require("../models/User");
 
 const upload = multer();
 
@@ -126,10 +127,10 @@ exports.sendEGiftToUser = async (req, res) => {
     const user = await User
       .findOne({ email: req
         .body
-        .email });  // Gửi eGift cho user có email được cung cấp
-    if (!user) {  // Nếu user không tồn tại
+        .email });
+    if (!user) { 
       return res.status(404).json({ success: false, message: "User not found" });
-    } // Tạo một owning card mới    
+    }   
     const owningCard = await OwningCard.create({
       user: user._id,
       egift: egift._id,
