@@ -1,3 +1,4 @@
+const nodemailer = require('nodemailer');
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const User = require("../models/User");
@@ -36,6 +37,14 @@ passport.use(
   )
 );
 
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.MAIL_ACCOUNT,
+    pass: process.env.MAIL_APP_PASSWORD
+  }
+});
+
 function generateOTP() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
@@ -68,24 +77,24 @@ passport.use(
             password: "123456",
           });
           await user.save();
+          // Gửi email chứa OTP
+          const emailHtml = `
+           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+             <h2 style="background-color: #007bff; color: white; padding: 10px;">Welcome to Our Platform!</h2>
+             <p>Dear <strong>${fullname}</strong>,</p>
+             <p>Thank you for registering using Google. Here is your OTP for verification:</p>
+             <p>OTP: <strong>${otp}</strong></p>
+             <p style="color: #555;">If you have any questions, please contact us.</p>
+           </div>`;
 
-          // console.log("Preparing to send email...");
+          await transporter.sendMail({
+            from: '"GROUP01 CI NÊ MA" <group01se1709@gmail.com>',
+            to: email,
+            subject: "OTP for Account Verification",
+            html: emailHtml,
+          });
 
-          // await transporter.sendMail({
-          //   from: '"GROUP01 CI NÊ MA" <group01se1709@gmail.com>',
-          //   to: email,
-          //   subject: "OTP for Account Verification",
-          //   html: `
-          //   <div>
-          //     <h2>Welcome, ${fullname}!</h2>
-          //     <p>Your OTP code: <strong>${otp}</strong></p>
-          //   </div>`,
-          // });
-
-          // console.log("Email sent successfully!");
         }
-
-
         return done(null, user);
       } catch (error) {
         return done(error, null);
