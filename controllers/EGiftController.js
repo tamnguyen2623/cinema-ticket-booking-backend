@@ -1,6 +1,8 @@
 const EGift = require("../models/EGiftCard");
 const multer = require("multer");
 const { uploadMultipleFiles } = require("./fileController");
+const OwningCard = require("../models/OwningCard");
+const User = require("../models/User");
 
 const upload = multer();
 
@@ -113,3 +115,32 @@ exports.softDeleteEGift = async (req, res) => {
     res.status(400).json({ success: false, message: error.message });
   }
 };
+
+exports.sendEGiftToUser = async (req, res) => {
+  try {
+    const egift = await EGift.findById(req
+      .body
+      .egiftId);
+    if (!egift || egift.isDelete) {
+      return res.status(404).json({ success: false, message: "EGift not found" });
+    }
+    const user = await User
+      .findOne({ email: req
+        .body
+        .email });
+    if (!user) { 
+      return res.status(404).json({ success: false, message: "User not found" });
+    }   
+    const owningCard = await OwningCard.create({
+      user: user._id,
+      egift: egift._id,
+      cardNumber: Math.random().toString(36).substr(2, 9),
+      expiryDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
+      balance: egift.value,
+      pin: Math.random().toString(36).substr(2, 4),
+    });
+    res.status(200).json({ success: true, data: owningCard });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+}
