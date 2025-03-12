@@ -243,10 +243,7 @@ exports.getUserBookings = async (req, res) => {
     // Truy vấn các booking của user, sắp xếp theo ngày đặt mới nhất
 
     const bookings = await Booking.find({ user: userId })
-      .select(
-        "movieName movieImage cinema room showtime date seats price currency status transactionId paymentTime qrCode createdAt updatedAt"
-      )
-      .sort({ createdAt: -1 });
+           .sort({ createdAt: -1 });
 
     if (!bookings.length) {
       return res
@@ -314,6 +311,7 @@ exports.bookingByMomo = async (req, res, next) => {
       movieName,
       cinema,
       price,
+      movieId,
       seats,
       showtime,
       seatsId,
@@ -345,6 +343,7 @@ exports.bookingByMomo = async (req, res, next) => {
     const newBooking = new Booking({
       user: userId,
       movieName,
+      movieId,
       showtime,
       seats,
       address,
