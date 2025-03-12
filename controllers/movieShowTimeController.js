@@ -15,6 +15,27 @@ exports.addMovieShowTime = async (req, res) => {
       });
     }
 
+    // Kiểm tra phim có tồn tại không
+    const movie = await Movie.findById(movieId);
+    if (!movie) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy phim",
+      });
+    }
+
+    // Kiểm tra xem phim đã phát hành chưa
+    const today = new Date();
+    const releaseDate = new Date(movie.releaseDate);
+
+    if (releaseDate > today) {
+      return res.status(400).json({
+        success: false,
+        message: "Phim chưa phát hành, không thể thêm suất chiếu",
+      });
+    }
+    console.log("releaseDate: ", releaseDate);
+
     const newShowTime = await MovieShowTime.create({
       movieId,
       showtimeId,
