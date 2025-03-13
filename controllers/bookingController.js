@@ -242,7 +242,7 @@ exports.getUserBookings = async (req, res) => {
 
     // Truy vấn các booking của user, sắp xếp theo ngày đặt mới nhất
 
-    const bookings = await Booking.find({ user: userId })
+    const bookings = await Booking.find({ user: userId, status: "success" })
            .sort({ createdAt: -1 });
 
     if (!bookings.length) {
