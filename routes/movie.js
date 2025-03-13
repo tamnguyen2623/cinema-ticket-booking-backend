@@ -7,7 +7,8 @@ const {
 	deleteMovie,
 	getShowingMovies,
 	getUnreleasedShowingMovies,
-	countMovies, getUpcomingMovies, getNowShowingMovies
+	countMovies, getUpcomingMovies, getNowShowingMovies,
+	setMovieIsDeleted
 } = require('../controllers/movieController')
 const router = express.Router()
 
@@ -24,7 +25,7 @@ router
 	.route('/:id')
 	.get(getMovie)
 	.put(protect, authorize('admin'), updateMovie)
-	.delete(protect, authorize('admin'), deleteMovie)
+	.delete(protect, authorize('admin'), setMovieIsDeleted)
 
 
 	
