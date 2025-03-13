@@ -8,7 +8,8 @@ const {
 	getShowingMovies,
 	getUnreleasedShowingMovies,
 	countMovies, getUpcomingMovies, getNowShowingMovies,
-	setMovieIsDeleted
+	setMovieIsDeleted,
+	getCustomerMovies
 } = require('../controllers/movieController')
 const router = express.Router()
 
@@ -20,7 +21,7 @@ router.route('/total').get(countMovies)
 router.route('/unreleased/showing').get(protect, authorize('admin'), getUnreleasedShowingMovies)
 router.route('/upcoming').get(getUpcomingMovies)
 router.route('/nowcoming').get(getNowShowingMovies)
-
+router.route('/customer').get(getCustomerMovies)
 router
 	.route('/:id')
 	.get(getMovie)
