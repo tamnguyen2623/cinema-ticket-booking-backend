@@ -54,11 +54,11 @@ exports.updateRole = async (req, res) => {
 // Xóa vai trò (Soft Delete)
 exports.deleteRole = async (req, res) => {
     try {
-        const role = await Role.findByIdAndDelete(req.params.id, { new: true });
+        const role = await Role.findById(req.params.id, { new: true });
         if (!role) {
             return res.status(404).json({ success: false, message: "Role not found" });
         }
-        // role.isDelete = true;
+        role.isDelete = true;
         await role.save()
         res.status(200).json({ success: true, message: "Role deleted successfully" });
     } catch (err) {
