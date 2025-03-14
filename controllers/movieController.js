@@ -7,6 +7,20 @@ const MovieType = require("../models/MovieType");
 
 const upload = multer();
 
+exports.getCustomerMovies = async (req, res) => {
+  try {
+    const movies = await Movie.find({ isDeleted: false }).populate("movieType", "name")
+    .sort({ createdAt: -1 });;
+    res.status(200).json({
+      success: true,
+      count: movies.length,
+      data: movies,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+}
+
 exports.getMovies = async (req, res, next) => {
   try {
     const movies = await Movie.find()
@@ -115,7 +129,7 @@ exports.getUnreleasedShowingMovies = async (req, res, next) => {
 
 exports.getMovie = async (req, res, next) => {
   try {
-    const movie = await Movie.findById(req.params.id);
+    const movie = await Movie.findById(req.params.id).populate("movieType");
 
     if (!movie) {
       return res.status(400).json({
@@ -153,6 +167,7 @@ exports.createMovie = async (req, res, next) => {
     }
 
     try {
+      const parsedDate = new Date(req.body.releaseDate);
       // Upload files to S3 using multipart upload
       const uploadedFiles = await uploadMultipleFiles(filesToUpload);
       // Create a new movie object with the URLs from the uploaded files
@@ -164,9 +179,14 @@ exports.createMovie = async (req, res, next) => {
         description: req.body.description,
         movieType: req.body.movieType,
         actor: req.body.actor,
-        releaseDate: parsedDate, // Thêm ngày phát hành
+        releaseDate: req.body.parsedDate, // Thêm ngày phát hành
 
       };
+      console.log("Request Headers:", req.headers);
+      console.log("Request Body:", req.body);
+      console.log("Uploaded Files:", req.files);
+      console.log("Files to Upload:", filesToUpload);
+
 
       // Save the movie to the database
       const movie = await Movie.create(movieData);
@@ -276,6 +296,7 @@ exports.getNowShowingMovies = async (req, res) => {
     const now = new Date();
 
     const movies = await Movie.find({
+      isDeleted: false,
       releaseDate: { $lt: now } // Chỉ lấy phim có ngày phát hành lớn hơn hôm nay
     }).populate("movieType");
     res.status(200).json({
@@ -295,6 +316,7 @@ exports.getUpcomingMovies = async (req, res) => {
 
     // Lấy danh sách phim có lịch chiếu trong tương lai
     const movies = await Movie.find({
+      isDeleted: false,
       releaseDate: { $gt: now } // Chỉ lấy phim có ngày phát hành lớn hơn hôm nay
     }).populate("movieType");
 
@@ -307,3 +329,20 @@ exports.getUpcomingMovies = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+exports.setMovieIsDeleted = async (req, res) => {
+  try {
+    const isDeleted = req.query.checked;
+    const movie = await Movie.findById(req.params.id);
+    if (!movie) {
+      return res.status(404).json({ success: false, message: "Movie not found" });
+    }
+
+    movie.isDeleted = isDeleted;
+    await movie.save();
+
+    res.status(200).json({ success: true, data: movie });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+}
