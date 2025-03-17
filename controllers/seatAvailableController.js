@@ -26,8 +26,9 @@ class SeatAvailableController {
       for (let i = 0; i < seats.length; i++) {
         const seatAvailable = new SeatAvailable({
           movieShowingId: movieShowingId,
-          seatId: seats[i]._id,
-          isAvailable: true,
+          name: seats[i].name,
+          type: seats[i].type,
+          isAvailable: seats[i].type==="Disabled" ? false : true,
         });
         seatAvailables.push(seatAvailable);
       }
