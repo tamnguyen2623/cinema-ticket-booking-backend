@@ -54,12 +54,12 @@ exports.updateRole = async (req, res) => {
 // Xóa vai trò (Soft Delete)
 exports.deleteRole = async (req, res) => {
     try {
-        const role = await Role.findById(req.params.id, { new: true });
+        const role = await Role.findById(req.params.id);
         if (!role) {
             return res.status(404).json({ success: false, message: "Role not found" });
         }
         role.isDelete = true;
-        await role.save()
+        await role.save(); // Lưu thay đổi vào database
         res.status(200).json({ success: true, message: "Role deleted successfully" });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
@@ -135,12 +135,12 @@ exports.updateEmployee = async (req, res) => {
 // Xóa user (Soft Delete)
 exports.deleteEmployee = async (req, res) => {
     try {
-        const user = await User.findByIdAndDelete(req.params.id, { new: true });
-
+        const user = await User.findById(req.params.id);
         if (!user) {
             return res.status(404).json({ success: false, message: "User not found" });
         }
         user.isDelete = true;
+        await user.save(); // Cần lưu lại thay đổi
         res.status(200).json({ success: true, message: "User deleted successfully" });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
