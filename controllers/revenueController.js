@@ -65,9 +65,9 @@ exports.getRevenueByDay = async (req, res, next) => {
     });
 
     res.json({
-        days: Array.from({ length: daysInMonth }, (_, i) => i + 1),
-        totalRevenueByDay: result,
-      });
+      days: Array.from({ length: daysInMonth }, (_, i) => i + 1),
+      totalRevenueByDay: result,
+    });
   } catch (error) {
     console.error("Error calculating revenue by day:", error);
     return [];
@@ -112,11 +112,15 @@ exports.getRevenueByNewCustomers = async (req, res, next) => {
       },
     ]);
 
-    res.json(
+    const responseData =
       result.length > 0
         ? result[0]
-        : { totalRevenueByNewCustomers: 0, totalRevenue: 0 }
-    );
+        : { totalRevenueByNewCustomers: 0, totalRevenue: 0 };
+
+    res.json([
+      { label: "New customer", value: responseData.totalRevenueByNewCustomers },
+      { label: "Total revenue", value: responseData.totalRevenue },
+    ]);
   } catch (error) {
     console.error("Error fetching revenue stats:", error);
     throw error;
@@ -147,7 +151,7 @@ exports.getRevenueByNewCustomers = async (req, res, next) => {
 //           },
 //         },
 //       ]);
-  
+
 //       const totalRevenue = await Booking.aggregate([
 //         { $match: { status: "success" } },
 //         {
@@ -163,7 +167,7 @@ exports.getRevenueByNewCustomers = async (req, res, next) => {
 //           },
 //         },
 //       ]);
-  
+
 //       res.json({
 //         totalRevenueByNewCustomers:
 //           totalRevenueResult.length > 0
@@ -176,4 +180,3 @@ exports.getRevenueByNewCustomers = async (req, res, next) => {
 //       res.status(500).json({ message: "Lỗi khi tính toán doanh thu" });
 //     }
 //   };
-  

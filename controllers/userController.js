@@ -26,7 +26,7 @@ const setupWorksheet = (workbook) => {
     { header: "Username", key: "username", width: 20 },
     { header: "Full Name", key: "fullname", width: 30 },
     { header: "Email", key: "email", width: 30 },
-    { header: "Number of bookings", key: "numberOfBookings", width: 10 },
+    { header: "Number of bookings", key: "numberOfBookings", width: 20 },
     { header: "Created Date", key: "createdAt", width: 20 },
     { header: "Status", key: "status", width: 15 },
   ];
@@ -81,7 +81,7 @@ exports.exportCustomers = async (req, res) => {
 
     const bookingCounts = await Booking.aggregate([
       {
-        $match: { user: { $in: customerIds } },
+        $match: { user: { $in: customerIds }, status: "success" },
       },
       {
         $group: {

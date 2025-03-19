@@ -92,7 +92,8 @@ exports.filterMovieShowTimes = async (req, res) => {
       .populate("movieId")
       .populate("showtimeId")
       .populate("cinemaId")
-      .populate("roomId");
+      .populate("roomId")
+      .sort({ createdAt: -1 });
     res.status(200).json({ success: true, data: showTimes });
   } catch (error) {
     console.error(error);

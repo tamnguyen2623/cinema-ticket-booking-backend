@@ -34,6 +34,10 @@ const movieSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "MovieType",
     },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
     releaseDate: {
       type: Date,
       required: [true, "Please add a release date"], // Bắt buộc nhập ngày phát hành
