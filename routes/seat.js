@@ -7,5 +7,6 @@ router.get('/', seatController.getAll);
 router.get('/:roomId', seatController.getSeatsByRoomID);
 router.post('/', seatController.createSeats);
 router.put('/:id', seatController.update);
+router.delete('/:roomId', seatController.delete);
 
 module.exports = router;

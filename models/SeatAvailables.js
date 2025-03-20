@@ -6,9 +6,11 @@ const seatAvailableSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "MovieShowing",
     },
-    seatId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Seat",
+    name: {
+      type: String,
+    },
+    type: {
+      type: String,
     },
     isAvailable: {
       type: Boolean,
