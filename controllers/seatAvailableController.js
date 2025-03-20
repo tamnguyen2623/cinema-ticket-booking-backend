@@ -8,7 +8,7 @@ class SeatAvailableController {
     try {
       const seats = await SeatAvailable.find({
         movieShowingId: movieShowingId,
-      }).populate("seatId");
+      })
       res.status(200).json(seats);
     } catch (error) {
       res.status(500).json({ message: error.message });
