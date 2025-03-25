@@ -195,26 +195,14 @@ exports.sendEGiftToUser = async (req, res) => {
         balance: balance,
         cardId: owningCard._id,
       });
-      res.json({ success: true, paymentUrl: payUrl });
+      res.json({ success: true, data: payUrl });
     } else if (method === "vnpay") {
       const payUrl = await paymentWithVNPAY(req, {
         balance: balance,
         cardId: owningCard._id,
       });
-      res.json({ success: true, paymentUrl: payUrl });
+      res.json({ success: true, data: payUrl });
     }
-
-    await sendMail({
-      email,
-      fullname: user.fullname,
-      fullName,
-      message,
-      cardNumber,
-      balance,
-      pin,
-      image: egift.image,
-    });
-    res.status(200).json({ success: true, data: owningCard });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
   }
@@ -228,7 +216,10 @@ exports.callbackMoMo = async (req, res) => {
       return res.status(400).send("Card ID is invalid.");
     }
 
-    const owningCard = await OwningCard.findById(cardId);
+    const owningCard = await OwningCard.findById(cardId)
+      .populate("user")
+      .populate("egift")
+      .populate("egiftRecipient");
 
     if (!owningCard) {
       return res.status(404).send("Owning card not found.");
@@ -243,6 +234,17 @@ exports.callbackMoMo = async (req, res) => {
     }
 
     const redirectUrl = `${process.env.FRONTEND_PREFIX}/egiftcardscustomer/${owningCard.egift._id}`;
+
+    await sendMail({
+      email: owningCard.egiftRecipient.email,
+      fullname: owningCard.user.fullname,
+      fullName: owningCard.egiftRecipient.fullName,
+      message: owningCard.egiftRecipient.message,
+      cardNumber: owningCard.cardNumber,
+      balance: owningCard.balance,
+      pin: owningCard.pin,
+      image: owningCard.egift.image,
+    });
     return res.redirect(redirectUrl);
   } catch (error) {
     console.error("Error in callBackVnPay:", error);
@@ -257,7 +259,10 @@ exports.callbackVNPAY = async (req, res) => {
     return res.status(400).send("Card ID is invalid.");
   }
 
-  const owningCard = await OwningCard.findById(cardId);
+  const owningCard = await OwningCard.findById(cardId)
+    .populate("user")
+    .populate("egift")
+    .populate("egiftRecipient");
 
   if (!owningCard) {
     return res.status(404).send("Owning card not found.");
@@ -272,6 +277,16 @@ exports.callbackVNPAY = async (req, res) => {
   }
 
   const redirectUrl = `${process.env.FRONTEND_PREFIX}/egiftcardscustomer/${owningCard.egift._id}`;
+  await sendMail({
+    email: owningCard.egiftRecipient.email,
+    fullname: owningCard.user.fullname,
+    fullName: owningCard.egiftRecipient.fullName,
+    message: owningCard.egiftRecipient.message,
+    cardNumber: owningCard.cardNumber,
+    balance: owningCard.balance,
+    pin: owningCard.pin,
+    image: owningCard.egift.image,
+  });
   return res.redirect(redirectUrl);
 };
 
