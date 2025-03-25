@@ -363,7 +363,7 @@ exports.bookingByMomo = async (req, res, next) => {
 
     await newBooking.save();
     const expireTime = new Date();
-    expireTime.setMinutes(expireTime.getMinutes() + 5);
+    expireTime.setMinutes(expireTime.getMinutes() + 10);
     var accessKey = process.env.MOMO_ACCESS_KEY;
     var secretKey = process.env.MOMO_SECRET_KEY;
     var orderInfo =
