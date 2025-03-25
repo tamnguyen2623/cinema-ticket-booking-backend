@@ -66,6 +66,13 @@ class SeatController {
       .then(() => res.status(200).json({ _id: req.params.id, data: req.body }))
       .catch((error) => res.status(500).json({ message: error.message }));
   }
+
+  // Delete seat
+  delete(req, res, next) {
+    Seat.deleteMany({ roomId: req.params.roomId })
+      .then(() => res.status(200).json({ message: `All seats with roomId ${req.params.roomId} have been deleted.` }))
+      .catch((error) => res.status(500).json({ message: error.message }));
+  }
 }
 
 module.exports = new SeatController();

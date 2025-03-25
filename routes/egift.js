@@ -1,6 +1,6 @@
 const express = require('express');
 const { protect, authorize } = require("../middleware/auth");
-const { createEGift, updateEGift, softDeleteEGift, getAllEGifts, getActiveEGifts, updateIsDelete, getEGiftById, sendEGiftToUser } = require('../controllers/EGiftController');
+const { getMySentEgiftCards, callbackMoMo, callbackVNPAY, createEGift, updateEGift, softDeleteEGift, getAllEGifts, getActiveEGifts, updateIsDelete, getEGiftById, sendEGiftToUser } = require('../controllers/EGiftController');
 
 const router = express.Router();
 
@@ -12,5 +12,8 @@ router.put('/updateIsDelete/:id', updateIsDelete);
 router.get('/egifts/active', getActiveEGifts);
 router.get('/egifts/:id', getEGiftById);
 router.post('/egift-cards/send/:id', protect, sendEGiftToUser);
+router.post('/egift-cards/momo/callback', protect, callbackMoMo);
+router.post('/egift-cards/vnpay/callback', protect, callbackVNPAY);
+router.post('/egift-cards/history', protect, getMySentEgiftCards);
 
 module.exports = router;

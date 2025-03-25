@@ -9,6 +9,7 @@ const Booking = require("../models/Booking");
 const SeatAvailable = require("../models/SeatAvailables");
 const Voucher = require("../models/Voucher");
 const Movie = require("../models/Movie");
+const OwningCard = require("../models/OwningCard");
 
 exports.orderByVnPay = async (req, res) => {
   try {
@@ -242,8 +243,10 @@ exports.getUserBookings = async (req, res) => {
 
     // Truy vấn các booking của user, sắp xếp theo ngày đặt mới nhất
 
-    const bookings = await Booking.find({ user: userId, status: "success" })
-           .sort({ createdAt: -1 });
+    const bookings = await Booking.find({
+      user: userId,
+      status: "success",
+    }).sort({ createdAt: -1 });
 
     if (!bookings.length) {
       return res
@@ -363,7 +366,7 @@ exports.bookingByMomo = async (req, res, next) => {
 
     await newBooking.save();
     const expireTime = new Date();
-    expireTime.setMinutes(expireTime.getMinutes() + 5);
+    expireTime.setMinutes(expireTime.getMinutes() + 10);
     var accessKey = process.env.MOMO_ACCESS_KEY;
     var secretKey = process.env.MOMO_SECRET_KEY;
     var orderInfo =
@@ -539,6 +542,10 @@ exports.callbackMomo = async (req, res) => {
         "Booking status is not 'success'. Seat availability update skipped."
       );
     }
+    if (booking.user?.email) {
+      await sendConfirmationEmail(booking.user.email, booking);
+    }
+
     const redirectUrl = `${process.env.FRONTEND_PREFIX}/booking/${transactionId}`;
     return res.redirect(redirectUrl);
   } catch (error) {
@@ -672,6 +679,131 @@ const sendConfirmationEmail = async (email, booking) => {
     console.log("Email xác nhận gửi thành công!");
   } catch (error) {
     console.error("Lỗi gửi email xác nhận:", error);
+  }
+};
+
+exports.bookingByEgiftCard = async (req, res, next) => {
+  let {
+    movieName,
+    cinema,
+    price,
+    movieId,
+    seats,
+    showtime,
+    seatsId,
+    voucherId,
+    room,
+    date,
+    combo,
+    address,
+    currency,
+    cardNumber,
+    pin,
+  } = req.body;
+  const userId = req.user?._id;
+  let discount = req.body.discount || 0;
+  if (!userId) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  console.log("Voucher ID from request:", voucherId);
+  const finalPrice = Number(price);
+  if (isNaN(finalPrice) || finalPrice <= 0) {
+    return res.status(400).json({ message: "Ticket price invalid!" });
+  }
+
+  const owningCard = await OwningCard.findOne({ cardNumber });
+  if (!owningCard) {
+    return res.status(400).json({ message: "Card not found!" });
+  }
+  if (owningCard.pin !== pin) {
+    return res.status(400).json({ message: "Invalid pin!" });
+  }
+  if (owningCard.inactive) {
+    return res.status(400).json({ message: "Card is inactive!" });
+  }
+  if (owningCard.balance < finalPrice) {
+    return res.status(400).json({ message: "Not enough balance!" });
+  }
+  owningCard.balance -= finalPrice;
+  await owningCard.save();
+
+  const transactionId = Date.now() + Math.floor(Math.random() * 1000);
+
+  const newBooking = new Booking({
+    user: userId,
+    movieName,
+    movieId,
+    showtime,
+    seats,
+    address,
+    seatsId,
+    voucherId,
+    discount,
+    price: finalPrice,
+    priceVND,
+    cinema,
+    room,
+    combo,
+    date,
+    transactionId: transactionId.toString(),
+    status: "success",
+    currency: finalCurrency,
+  });
+  try {
+    await newBooking.save();
+  } catch (error) {
+    owningCard.balance += finalPrice;
+    await owningCard.save();
+    res.status(500).json({ message: "Error server" });
+  }
+  try {
+    let seatsId = req.body?.seatsId || newBooking.seatsId;
+    let voucherId = req.body?.voucherId || newBooking.voucherId;
+    if (!seatsId || seatsId.length === 0) {
+      console.error("No seats found in booking.");
+    } else {
+      console.log("Booking success! Updating seat availability...");
+
+      const seatObjectIds = seatsId.map(
+        (id) => new mongoose.Types.ObjectId(id)
+      );
+
+      const updateResult = await SeatAvailable.updateMany(
+        { _id: { $in: seatObjectIds } },
+        { $set: { isAvailable: false } }
+      );
+      let updateVoucher = null;
+
+      if (voucherId && mongoose.Types.ObjectId.isValid(voucherId)) {
+        updateVoucher = await Voucher.updateOne(
+          { _id: new mongoose.Types.ObjectId(voucherId) },
+          { $set: { isUsed: true } }
+        );
+        console.log("Voucher update result:", updateVoucher);
+      } else {
+        console.log("Skipping voucher update, invalid voucherId:", voucherId);
+      }
+
+      if (updateVoucher) {
+        console.log("updateVoucher result:", updateVoucher);
+      }
+      console.log("Seat update result:", updateResult);
+      console.log("updateVoucher result:", updateVoucher);
+    }
+
+    if (newBooking.user?.email) {
+      await sendConfirmationEmail(newBooking.user?.email, newBooking);
+    }
+
+    const redirectUrl = `${process.env.FRONTEND_PREFIX}/booking/${transactionId}`;
+    return res.redirect(redirectUrl);
+  } catch (error) {
+    console.error("Error in callBackVnPay:", error);
+    newBooking.status = "failed";
+    await newBooking.save();
+    owningCard.balance += finalPrice;
+    await owningCard.save();
+    res.status(500).send("Server error");
   }
 };
 
