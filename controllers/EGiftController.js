@@ -438,3 +438,28 @@ const paymentWithMoMo = async (data) => {
   req1.write(requestBody);
   req1.end();
 };
+
+exports.getMySentEgiftCards = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    const egifts = await OwningCard.find({ user: user._id }).populate("egift");
+
+    const maskedEgifts = egifts.map((card) => {
+      return {
+        ...card._doc,
+        cardNumber: "*".repeat(card.cardNumber.length - 4) + card.cardNumber.slice(-4),
+        pin: "******",
+      };
+    });
+
+    res.status(200).json({ success: true, data: maskedEgifts });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
