@@ -6,7 +6,7 @@ const OwningCard = require("../models/OwningCard");
 const User = require("../models/User");
 const EgiftRecipient = require("../models/EgiftRecipient");
 const { vnpay } = require("../config/vnpayConfig");
-const { ProductCode, VnpLocale } = require("vnpay");
+const { ProductCode, VnpLocale, dateFormat } = require("vnpay");
 
 const upload = multer();
 
@@ -171,7 +171,7 @@ exports.sendEGiftToUser = async (req, res) => {
     ).toString();
     const pin = Math.floor(1000 + Math.random() * 9000).toString();
 
-    const recipient = EgiftRecipient.create({
+    const recipient = await EgiftRecipient.create({
       fullName,
       email,
       message,
@@ -233,8 +233,9 @@ exports.callbackMoMo = async (req, res) => {
       await owningCard.save();
     }
 
-    const redirectUrl = `${process.env.FRONTEND_PREFIX}/egiftcardscustomer/${owningCard.egift._id}`;
+    const redirectUrl = `${process.env.FRONTEND_PREFIX}/egift/history`;
 
+    console.log(owningCard)
     await sendMail({
       email: owningCard.egiftRecipient.email,
       fullname: owningCard.user.fullname,
@@ -276,7 +277,7 @@ exports.callbackVNPAY = async (req, res) => {
     await owningCard.save();
   }
 
-  const redirectUrl = `${process.env.FRONTEND_PREFIX}/egiftcardscustomer/${owningCard.egift._id}`;
+  const redirectUrl = `${process.env.FRONTEND_PREFIX}/egift/history`;
   await sendMail({
     email: owningCard.egiftRecipient.email,
     fullname: owningCard.user.fullname,
@@ -295,7 +296,7 @@ const paymentWithVNPAY = async (req, data) => {
   expireTime.setMinutes(expireTime.getMinutes() + 10);
 
   const paymentUrl = vnpay.buildPaymentUrl({
-    vnp_Amount: data.balace * 25000 * 100,
+    vnp_Amount: data.balance * 25000 * 100,
     vnp_IpAddr: req.socket.remoteAddress || "127.0.0.1",
     vnp_TxnRef: data.cardId.toString(),
     vnp_OrderInfo: `You are sending an E-Gift Card to your friend with balance is ${data.balance}`,
@@ -424,6 +425,7 @@ const paymentWithMoMo = async (data) => {
   const req1 = https.request(options, (res1) => {
     res1.setEncoding("utf8");
     res1.on("data", (body) => {
+      console.log("Response: " + body);
       return JSON.parse(body).payUrl;
     });
     res1.on("end", () => {
