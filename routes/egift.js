@@ -14,6 +14,6 @@ router.get('/egifts/:id', getEGiftById);
 router.post('/egift-cards/send/:id', protect, sendEGiftToUser);
 router.get('/egift-cards/momo/callback', callbackMoMo);
 router.get('/egift-cards/vnpay/callback', callbackVNPAY);
-router.post('/egift-cards/history', protect, getMySentEgiftCards);
+router.get('/egift-cards/history', protect, getMySentEgiftCards);
 
 module.exports = router;
