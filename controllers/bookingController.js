@@ -341,7 +341,7 @@ exports.bookingByMomo = async (req, res, next) => {
     const priceVND =
       finalCurrency === "USD" ? finalPrice * exchangeRate : finalPrice;
     const transactionId = Date.now() + Math.floor(Math.random() * 1000);
-
+    const movie = await Movie.findById(movieId);
     const newBooking = new Booking({
       user: userId,
       movieName,
@@ -356,6 +356,7 @@ exports.bookingByMomo = async (req, res, next) => {
       priceVND,
       cinema,
       room,
+      movieImage: movie?.img,
       combo,
       date,
       transactionId: transactionId.toString(),
@@ -733,11 +734,12 @@ exports.bookingByEgiftCard = async (req, res, next) => {
   await owningCard.save();
 
   const transactionId = Date.now() + Math.floor(Math.random() * 1000);
-
+  const movie = await Movie.findById(movieId);
   const newBooking = new Booking({
     user: userId,
     movieName,
     movieId,
+    movieImage: movie?.img,
     showtime,
     seats,
     address,
