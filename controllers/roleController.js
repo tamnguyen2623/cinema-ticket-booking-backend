@@ -4,7 +4,7 @@ const User = require("../models/User");
 // Lấy tất cả vai trò
 exports.getRoles = async (req, res) => {
   try {
-    const roles = await Role.find();
+    const roles = await Role.find().sort({ createdAt: -1 });
     res.status(200).json({ success: true, data: roles });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -59,21 +59,17 @@ exports.updateRole = async (req, res) => {
 
 // Xóa vai trò (Soft Delete)
 exports.deleteRole = async (req, res) => {
-  try {
-    const role = await Role.findById(req.params.id);
-    if (!role) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Role not found" });
+    try {
+        const role = await Role.findById(req.params.id);
+        if (!role) {
+            return res.status(404).json({ success: false, message: "Role not found" });
+        }
+        role.isDelete = req.body.isDelete;
+        await role.save(); // Lưu thay đổi vào database
+        res.status(200).json({ success: true, message: "Role deleted successfully" });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
     }
-    role.isDelete = true;
-    await role.save(); // Lưu thay đổi vào database
-    res
-      .status(200)
-      .json({ success: true, message: "Role deleted successfully" });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
 };
 
 exports.getEmployee = async (req, res) => {
@@ -113,13 +109,17 @@ exports.getEmployeeById = async (req, res) => {
 // Tạo Employee mới
 exports.createEmployee = async (req, res) => {
   try {
-    const { roleId, username, email, fullname } = req.body;
-    const user = await User.create({ roleId, username, email, fullname });
+    const { roleId, username, email, fullname, password } = req.body;
+    const user = await User.create({ roleId, username, email, fullname,password,isVerified: true });
+     ;
 
     // Populate để hiển thị tên role
     const populatedUser = await User.findById(user._id).populate(
       "roleId",
-      "name"
+      { name: 1,
+        roleId: 1 }, // Chỉ trả về trường name và roleId
+
+      
     );
 
     res.status(201).json({ success: true, data: populatedUser });
@@ -152,19 +152,15 @@ exports.updateEmployee = async (req, res) => {
 
 // Xóa user (Soft Delete)
 exports.deleteEmployee = async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id);
-    if (!user) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+        user.isDelete = req.body.isDelete;
+        await user.save(); // Cần lưu lại thay đổi
+        res.status(200).json({ success: true, message: "User deleted successfully" });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
     }
-    user.isDelete = true;
-    await user.save(); // Cần lưu lại thay đổi
-    res
-      .status(200)
-      .json({ success: true, message: "User deleted successfully" });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
 };

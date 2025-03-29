@@ -8,7 +8,7 @@ class SeatAvailableController {
     try {
       const seats = await SeatAvailable.find({
         movieShowingId: movieShowingId,
-      }).populate("seatId");
+      })
       res.status(200).json(seats);
     } catch (error) {
       res.status(500).json({ message: error.message });
@@ -26,8 +26,9 @@ class SeatAvailableController {
       for (let i = 0; i < seats.length; i++) {
         const seatAvailable = new SeatAvailable({
           movieShowingId: movieShowingId,
-          seatId: seats[i]._id,
-          isAvailable: true,
+          name: seats[i].name,
+          type: seats[i].type,
+          isAvailable: seats[i].type==="Disabled" ? false : true,
         });
         seatAvailables.push(seatAvailable);
       }
@@ -51,6 +52,12 @@ class SeatAvailableController {
       .then(() => res.status(200).json({ updatedSeats: seatIds }))
       .catch((error) => res.status(500).json({ message: error.message }));
   }
+
+  delete(req, res, next) {
+    SeatAvailable.deleteMany({ movieShowingId: req.params.movieShowingId })
+        .then(() => res.status(200).json({ message: `All seats with movieShowingId ${req.params.movieShowingId} have been deleted.` }))
+        .catch((error) => res.status(500).json({ message: error.message }));
+    }
 }
 
 module.exports = new SeatAvailableController();

@@ -59,12 +59,15 @@ const userSchema = new mongoose.Schema({
       ticketId: String,
     },
   ],
-  avatar: { 
-    type: String, 
-    default: "" 
+  avatar: {
+    type: String,
+    default: ""
   }, // Trường lưu URL avatar
 
-
+  favoriteMovies: [{ 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: "Movie"
+  }],
   createdAt: {
     type: Date,
     default: Date.now,

@@ -109,7 +109,7 @@ exports.getAllMovieShowing = async (req, res) => {
         },
       })
       .populate("showtimeId")
-      .populate("cinemaId");
+      .populate("cinemaId").sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,

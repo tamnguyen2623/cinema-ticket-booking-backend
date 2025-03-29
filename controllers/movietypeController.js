@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 // Get all movie types
 exports.getMovieTypes = async (req, res, next) => {
     try {
-        const movieTypes = await MovieType.find();
+        const movieTypes = await MovieType.find().sort({ createdAt: -1 });
         res.status(200).json({ success: true, data: movieTypes });
     } catch (err) {
         res.status(400).json({ success: false, message: err.message });
@@ -52,7 +52,7 @@ exports.createMovieType = async (req, res, next) => {
 exports.updateMovieType = async (req, res, next) => {
     try {
         const movieType = await MovieType.findById(req.params.id);
-        if (!movieType || movieType.isDelete) {
+        if (!movieType) {
             return res.status(404).json({ success: false, message: `MovieType not found with id ${req.params.id}` });
         }
 

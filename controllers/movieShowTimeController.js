@@ -60,7 +60,7 @@ exports.deleteMovieShowTime = async (req, res) => {
 
     const deletedShowTime = await MovieShowTime.findByIdAndUpdate(
       id,
-      { isDelete: true },
+      req.body,
       { new: true }
     );
 
@@ -111,7 +111,7 @@ exports.getMovieShowTimeById = async (req, res) => {
       .populate("movieId")
       .populate("showtimeId")
       .populate("cinemaId")
-      .populate("roomId");
+      .populate("roomId").sort({ createdAt: -1 });
 
     if (!showTime) {
       return res.status(404).json({
@@ -186,10 +186,10 @@ exports.getShowTimesBySelection = async (req, res) => {
     }
 
     const showTimes = await MovieShowTime.find(filter)
-      .populate("movieId", "name")
-      .populate("showtimeId", "startTime")
-      .populate("cinemaId", "name")
-      .populate("roomId", "roomname roomtype");
+      .populate("movieId")
+      .populate("showtimeId")
+      .populate("cinemaId")
+      .populate("roomId").sort({ createdAt: -1 });
 
     if (!showTimes.length) {
       return res.status(404).json({
