@@ -124,6 +124,7 @@ app.use("/feedback", feedback);
 app.use("/revenue", revenue);
 app.use("/user", user);
 app.use("/egift", egift);
+app.use("/favorite", favoriteMovie);
 app.use("/support", support);
 app.use("/banner", banner);
 app.use("/service", service);
