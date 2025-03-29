@@ -37,6 +37,7 @@ const egift = require("./routes/egift");
 const support = require("./routes/support");
 const banner = require("./routes/banner");
 const service = require("./routes/service");
+const favoriteMovie = require("./routes/favorite")
 
 mongoose.set("strictQuery", false);
 mongoose
