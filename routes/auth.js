@@ -32,6 +32,7 @@ router.post("/verifyotpregister", verifyOtpRegister);
 router.post("/resendotp", resendOtp);
 router.post("/login", login);
 router.get("/logout", logout);
+
 router.get("/me", protect, getMe);
 router.put("/profile/user/:id", protect, updateProfile);
 

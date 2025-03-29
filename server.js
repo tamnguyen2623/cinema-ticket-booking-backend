@@ -35,6 +35,7 @@ const revenue = require("./routes/revenue");
 const user = require("./routes/user");
 const egift = require("./routes/egift");
 const support = require("./routes/support");
+const promotion = require("./routes/promotion")
 mongoose.set("strictQuery", false);
 mongoose
   .connect(process.env.DATABASE)
@@ -122,6 +123,7 @@ app.use("/revenue", revenue);
 app.use("/user", user);
 app.use("/egift", egift);
 app.use("/support", support);
+app.use("/promotion", promotion);
 app.use(passport.initialize());
 const port = process.env.PORT || 8080;
 

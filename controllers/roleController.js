@@ -109,13 +109,17 @@ exports.getEmployeeById = async (req, res) => {
 // Tạo Employee mới
 exports.createEmployee = async (req, res) => {
   try {
-    const { roleId, username, email, fullname } = req.body;
-    const user = await User.create({ roleId, username, email, fullname });
+    const { roleId, username, email, fullname, password } = req.body;
+    const user = await User.create({ roleId, username, email, fullname,password,isVerified: true });
+     ;
 
     // Populate để hiển thị tên role
     const populatedUser = await User.findById(user._id).populate(
       "roleId",
-      "name"
+      { name: 1,
+        roleId: 1 }, // Chỉ trả về trường name và roleId
+
+      
     );
 
     res.status(201).json({ success: true, data: populatedUser });
