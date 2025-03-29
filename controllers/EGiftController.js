@@ -6,7 +6,7 @@ const OwningCard = require("../models/OwningCard");
 const User = require("../models/User");
 const EgiftRecipient = require("../models/EgiftRecipient");
 const { vnpay } = require("../config/vnpayConfig");
-const { ProductCode, VnpLocale } = require("vnpay");
+const { ProductCode, VnpLocale, dateFormat } = require("vnpay");
 
 const upload = multer();
 
@@ -171,7 +171,7 @@ exports.sendEGiftToUser = async (req, res) => {
     ).toString();
     const pin = Math.floor(1000 + Math.random() * 9000).toString();
 
-    const recipient = EgiftRecipient.create({
+    const recipient = await EgiftRecipient.create({
       fullName,
       email,
       message,
@@ -195,6 +195,7 @@ exports.sendEGiftToUser = async (req, res) => {
         balance: balance,
         cardId: owningCard._id,
       });
+      console.log(payUrl);
       res.json({ success: true, data: payUrl });
     } else if (method === "vnpay") {
       const payUrl = await paymentWithVNPAY(req, {
@@ -233,8 +234,9 @@ exports.callbackMoMo = async (req, res) => {
       await owningCard.save();
     }
 
-    const redirectUrl = `${process.env.FRONTEND_PREFIX}/egiftcardscustomer/${owningCard.egift._id}`;
+    const redirectUrl = `${process.env.FRONTEND_PREFIX}/egift/history`;
 
+    console.log(owningCard)
     await sendMail({
       email: owningCard.egiftRecipient.email,
       fullname: owningCard.user.fullname,
@@ -276,7 +278,7 @@ exports.callbackVNPAY = async (req, res) => {
     await owningCard.save();
   }
 
-  const redirectUrl = `${process.env.FRONTEND_PREFIX}/egiftcardscustomer/${owningCard.egift._id}`;
+  const redirectUrl = `${process.env.FRONTEND_PREFIX}/egift/history`;
   await sendMail({
     email: owningCard.egiftRecipient.email,
     fullname: owningCard.user.fullname,
@@ -295,7 +297,7 @@ const paymentWithVNPAY = async (req, data) => {
   expireTime.setMinutes(expireTime.getMinutes() + 10);
 
   const paymentUrl = vnpay.buildPaymentUrl({
-    vnp_Amount: data.balace * 25000 * 100,
+    vnp_Amount: data.balance * 25000,
     vnp_IpAddr: req.socket.remoteAddress || "127.0.0.1",
     vnp_TxnRef: data.cardId.toString(),
     vnp_OrderInfo: `You are sending an E-Gift Card to your friend with balance is ${data.balance}`,
@@ -309,6 +311,7 @@ const paymentWithVNPAY = async (req, data) => {
 };
 
 const sendMail = async (data) => {
+  console.log(data);
   const mailOptions = {
     from: process.env.MAIL_ACCOUNT,
     to: data.email,
@@ -318,7 +321,7 @@ const sendMail = async (data) => {
       <div style="max-width: 600px; background-color: #ffffff; border-radius: 12px; padding: 25px; margin: auto; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
         
         <h2 style="color: #333;">🎉 Hello, <span style="color: #007bff;">${data.fullName}</span>!</h2>
-        <p style="color: #666; font-size: 16px;">You have received a special E-Gift Card from <strong>${user.fullname}</strong>! 🎁</p>
+        <p style="color: #666; font-size: 16px;">You have received a special E-Gift Card from <strong>${data.fullname}</strong>! 🎁</p>
 
         <div style="background: #f8f9fa; border-left: 5px solid #007bff; padding: 15px; border-radius: 8px; margin: 20px 0;">
           <p style="color: #555; font-style: italic;">"${data.message}"</p>
@@ -410,33 +413,50 @@ const paymentWithMoMo = async (data) => {
   });
 
   const https = require("https");
-  const options = {
-    hostname: process.env.MOMO_HOST,
-    port: 443,
-    path: process.env.MOMO_PATH,
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Content-Length": Buffer.byteLength(requestBody),
-    },
-  };
+  return new Promise((resolve, reject) => {
 
-  const req1 = https.request(options, (res1) => {
-    res1.setEncoding("utf8");
-    res1.on("data", (body) => {
-      return JSON.parse(body).payUrl;
+    const options = {
+      hostname: process.env.MOMO_HOST,
+      port: 443,
+      path: process.env.MOMO_PATH,
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Content-Length": Buffer.byteLength(requestBody),
+      },
+    };
+
+    const req1 = https.request(options, (res1) => {
+      let responseData = "";
+
+      res1.on("data", (chunk) => {
+        responseData += chunk;
+      });
+
+      res1.on("end", () => {
+        try {
+          const responseJson = JSON.parse(responseData);
+          console.log("Response: ", responseJson);
+
+          if (responseJson.payUrl) {
+            resolve(responseJson.payUrl); // Trả về payUrl khi thành công
+          } else {
+            reject(new Error("Không tìm thấy payUrl trong phản hồi."));
+          }
+        } catch (error) {
+          reject(new Error("Lỗi khi parse JSON từ phản hồi."));
+        }
+      });
     });
-    res1.on("end", () => {
-      console.log("No more data in response.");
+
+    req1.on("error", (e) => {
+      reject(new Error(`Lỗi khi gửi request: ${e.message}`));
     });
-  });
 
-  req1.on("error", (e) => {
-    console.log(`problem with request: ${e.message}`);
-  });
+    req1.write(requestBody);
+    req1.end();
+  })
 
-  req1.write(requestBody);
-  req1.end();
 };
 
 exports.getMySentEgiftCards = async (req, res) => {
@@ -448,7 +468,7 @@ exports.getMySentEgiftCards = async (req, res) => {
         .json({ success: false, message: "User not found" });
     }
 
-    const egifts = await OwningCard.find({ user: user._id }).populate("egift");
+    const egifts = await OwningCard.find({ user: user._id }).populate("egift").populate("egiftRecipient");
 
     const maskedEgifts = egifts.map((card) => {
       return {
@@ -457,6 +477,8 @@ exports.getMySentEgiftCards = async (req, res) => {
         pin: "******",
       };
     });
+
+    console.log(maskedEgifts);
 
     res.status(200).json({ success: true, data: maskedEgifts });
   } catch (error) {

@@ -1,29 +1,34 @@
-const Service = require("../models/Service");
+const Service = require('../models/Service');
 
-const addService = async (req, res) => {
-  try {
-    const { cinemaName, fullName, phoneNumber, email, information } = req.body;
-
-    const newService = new Service({ cinemaName, fullName, phoneNumber, email, information });
-    await newService.save();
-
-    res.status(201).json(newService); 
-  } catch (error) {
-    res.status(500).json({ error: "Internal Server Error", details: error.message });
-  }
+// Get all services
+exports.getServices = async (req, res) => {
+    try {
+        const services = await Service.find();
+        res.status(200).json({ success: true, data: services });
+    } catch (err) {
+        res.status(400).json({ success: false, message: err.message });
+    }
 };
 
-const listService = async (req, res) => {
-  try {
-    const services = await Service.find().sort({ createdAt: -1 });
-
-    res.status(200).json(services);
-  } catch (error) {
-    res.status(500).json({ error: "Internal Server Error", details: error.message });
-  }
+// Get single service by ID
+exports.getService = async (req, res) => {
+    try {
+        const service = await Service.findById(req.params.id);
+        if (!service) {
+            return res.status(404).json({ success: false, message: `Service not found with id ${req.params.id}` });
+        }
+        res.status(200).json({ success: true, data: service });
+    } catch (err) {
+        res.status(400).json({ success: false, message: err.message });
+    }
 };
 
-module.exports = {
-  addService,
-  listService, 
+// Create new service
+exports.createService = async (req, res) => {
+    try {
+        const service = await Service.create(req.body);
+        res.status(201).json({ success: true, data: service });
+    } catch (err) {
+        res.status(400).json({ success: false, message: err.message });
+    }
 };

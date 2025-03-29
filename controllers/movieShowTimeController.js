@@ -186,10 +186,10 @@ exports.getShowTimesBySelection = async (req, res) => {
     }
 
     const showTimes = await MovieShowTime.find(filter)
-      .populate("movieId", "name")
-      .populate("showtimeId", "startTime")
-      .populate("cinemaId", "name")
-      .populate("roomId", "roomname roomtype");
+      .populate("movieId")
+      .populate("showtimeId")
+      .populate("cinemaId")
+      .populate("roomId",);
 
     if (!showTimes.length) {
       return res.status(404).json({
