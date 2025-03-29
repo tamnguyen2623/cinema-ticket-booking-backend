@@ -175,7 +175,6 @@ exports.callBackVnPay = async (req, res) => {
           await sendConfirmationEmail(user.email, booking);
         }
 
-
         const updateResult = await SeatAvailable.updateMany(
           { _id: { $in: seatObjectIds } },
           { $set: { isAvailable: false } }
@@ -711,6 +710,12 @@ exports.bookingByEgiftCard = async (req, res, next) => {
     return res.status(400).json({ message: "Ticket price invalid!" });
   }
 
+  const finalCurrency = currency || "VND";
+  const exchangeRate = 24000;
+
+  const priceVND =
+    finalCurrency === "USD" ? finalPrice * exchangeRate : finalPrice;
+
   const owningCard = await OwningCard.findOne({ cardNumber });
   if (!owningCard) {
     return res.status(400).json({ message: "Card not found!" });
@@ -749,6 +754,16 @@ exports.bookingByEgiftCard = async (req, res, next) => {
     status: "success",
     currency: finalCurrency,
   });
+  newBooking.status = "success";
+  newBooking.paymentTime = new Date();
+
+  try {
+    const qrCode = await QRCode.toDataURL(transactionId.toString());
+    newBooking.qrCode = qrCode;
+  } catch (qrError) {
+    console.error("Error generating QR code:", qrError);
+  }
+
   try {
     await newBooking.save();
   } catch (error) {
@@ -794,9 +809,7 @@ exports.bookingByEgiftCard = async (req, res, next) => {
     if (newBooking.user?.email) {
       await sendConfirmationEmail(newBooking.user?.email, newBooking);
     }
-
-    const redirectUrl = `${process.env.FRONTEND_PREFIX}/booking/${transactionId}`;
-    return res.redirect(redirectUrl);
+    return res.json({success: true, message: "Booking successful!"});
   } catch (error) {
     console.error("Error in callBackVnPay:", error);
     newBooking.status = "failed";
