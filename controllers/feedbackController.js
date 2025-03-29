@@ -6,7 +6,8 @@ class feedbackController {
     try {
       const feedbacks = await Feedback.find()
         .populate("userId")
-        .populate("movieId");
+        .populate("movieId")
+        .sort({ createdAt: -1 });
       res.status(200).json(feedbacks);
     } catch (error) {
       res.status(500).json({ message: error.message });
@@ -19,7 +20,7 @@ class feedbackController {
       const feedbacks = await Feedback.find({
         movieId: req.params.movieId,
         isDelete: false,
-      }).populate("userId");
+      }).populate("userId").sort({ createdAt: -1 });
       res.status(200).json(feedbacks);
     } catch (error) {
       res.status(500).json({ message: error.message });

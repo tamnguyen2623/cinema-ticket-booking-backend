@@ -7,7 +7,7 @@ const upload = multer();
 // Get all combos
 exports.getCombos = async (req, res, next) => {
   try {
-    const combos = await Combo.find();
+    const combos = await Combo.find().sort({ createdAt: -1 });
     res.status(200).json({ success: true, data: combos });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
@@ -17,7 +17,7 @@ exports.getCombos = async (req, res, next) => {
 // Get all combos
 exports.getCombosIsNotDisabled = async (req, res, next) => {
   try {
-    const combos = await Combo.find({ isDelete: false });
+    const combos = await Combo.find({ isDelete: false }).sort({ createdAt: -1 });
     res.status(200).json({ success: true, data: combos });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
@@ -45,7 +45,7 @@ exports.searchComboByName = async (req, res, next) => {
   try {
     const combo = await Combo.findOne({
       name: { $regex: req.params.name, $options: "i" },
-    });
+    }).sort({ createdAt: -1 });
     if (!combo) {
       return res.status(404).json({
         success: false,
@@ -113,7 +113,7 @@ exports.updateCombo = async (req, res, next) => {
 
       try {
         const combo = await Combo.findById(req.params.id);
-        if (!combo || combo.isDelete) {
+        if (!combo) {
           return res.status(404).json({
             success: false,
             message: `Combo not found with id ${req.params.id}`,

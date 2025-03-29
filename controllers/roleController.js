@@ -4,7 +4,7 @@ const User = require("../models/User");
 // Lấy tất cả vai trò
 exports.getRoles = async (req, res) => {
   try {
-    const roles = await Role.find();
+    const roles = await Role.find().sort({ createdAt: -1 });
     res.status(200).json({ success: true, data: roles });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -64,7 +64,7 @@ exports.deleteRole = async (req, res) => {
         if (!role) {
             return res.status(404).json({ success: false, message: "Role not found" });
         }
-        role.isDelete = true;
+        role.isDelete = req.body.isDelete;
         await role.save(); // Lưu thay đổi vào database
         res.status(200).json({ success: true, message: "Role deleted successfully" });
     } catch (err) {
@@ -157,7 +157,7 @@ exports.deleteEmployee = async (req, res) => {
         if (!user) {
             return res.status(404).json({ success: false, message: "User not found" });
         }
-        user.isDelete = true;
+        user.isDelete = req.body.isDelete;
         await user.save(); // Cần lưu lại thay đổi
         res.status(200).json({ success: true, message: "User deleted successfully" });
     } catch (err) {

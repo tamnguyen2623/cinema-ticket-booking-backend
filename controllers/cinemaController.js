@@ -7,7 +7,7 @@ exports.getListCinemas = async (req, res) => {
   try {
     const cinemas = await Cinema.find()
       .collation({ locale: "en", strength: 2 })
-      .sort({ name: 1 });
+      .sort({ createdAt: -1 });
 
     res.status(200).json({ success: true, count: cinemas.length, data: cinemas });
   } catch (err) {
@@ -22,7 +22,7 @@ exports.getListCinemasForCustomer = async (req, res) => {
   try {
     const cinemas = await Cinema.find({ isDelete: false })
       .collation({ locale: "en", strength: 2 })
-      .sort({ name: 1 });
+      .sort({ createdAt: -1 });
 
     res.status(200).json({ success: true, count: cinemas.length, data: cinemas });
   } catch (err) {

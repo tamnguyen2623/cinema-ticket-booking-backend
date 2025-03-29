@@ -3,7 +3,7 @@ const moment = require("moment-timezone");
 // Get all showtimes
 exports.getAllShowtimes = async (req, res, next) => {
   try {
-    const showtimes = await Showtime.find(); // Get showtimes that are not deleted
+    const showtimes = await Showtime.find().sort({ createdAt: -1 }); // Get showtimes that are not deleted
     res.status(200).json(showtimes);
   } catch (err) {
     res.status(500).json({ message: 'Server error' });

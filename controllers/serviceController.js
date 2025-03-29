@@ -3,7 +3,7 @@ const Service = require('../models/Service');
 // Get all services
 exports.getServices = async (req, res) => {
     try {
-        const services = await Service.find();
+        const services = await Service.find().sort({ createdAt: -1 });
         res.status(200).json({ success: true, data: services });
     } catch (err) {
         res.status(400).json({ success: false, message: err.message });

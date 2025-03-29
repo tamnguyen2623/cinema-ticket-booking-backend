@@ -36,7 +36,7 @@ const getListFavoriteMovie = async (req, res) => {
     if (!userId) {
       return res.status(400).json({ message: "Thiếu userId" });
     }
-    const user = await User.findById(userId).populate("favoriteMovies");
+    const user = await User.findById(userId).populate("favoriteMovies").sort({ createdAt: -1 });
     if (!user) {
       return res.status(404).json({ message: "User không tồn tại" });
     }

@@ -13,7 +13,7 @@ const upload = multer();
 // Lấy danh sách tất cả eGift
 exports.getAllEGifts = async (req, res) => {
   try {
-    const egifts = await EGift.find();
+    const egifts = await EGift.find().sort({ createdAt: -1 });
     res.status(200).json({ success: true, data: egifts });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
@@ -23,7 +23,7 @@ exports.getAllEGifts = async (req, res) => {
 // Lấy danh sách eGift chưa bị xóa (isDelete: false)
 exports.getActiveEGifts = async (req, res) => {
   try {
-    const egifts = await EGift.find({ isDelete: false });
+    const egifts = await EGift.find({ isDelete: false }).sort({ createdAt: -1 });
     res.status(200).json({ success: true, data: egifts });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
@@ -96,7 +96,7 @@ exports.updateEGift = async (req, res) => {
 
       try {
         const egift = await EGift.findById(req.params.id);
-        if (!egift || egift.isDelete) {
+        if (!egift) {
           return res
             .status(404)
             .json({ success: false, message: "EGift not found" });
@@ -461,7 +461,7 @@ const paymentWithMoMo = async (data) => {
 
 exports.getMySentEgiftCards = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id);
+    const user = await User.findById(req.user._id).sort({ createdAt: -1 });
     if (!user) {
       return res
         .status(404)

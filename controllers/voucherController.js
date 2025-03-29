@@ -59,7 +59,7 @@ const filterVouchers = async (req, res) => {
     if (isUsed !== undefined) filters.isUsed = isUsed === "true";
     if (expiredDate) filters.expiredDate = { $lte: new Date(expiredDate) };
 
-    const vouchers = await Voucher.find(filters);
+    const vouchers = await Voucher.find(filters).sort({ createdAt: -1 });
     res.status(200).json({ vouchers });
   } catch (error) {
     res

@@ -55,7 +55,7 @@ exports.getAllRooms = async (req, res) => {
 
     const rooms = await Room.find(filter)
       .populate("cinema", "name")
-      .populate("seats");
+      .populate("seats").sort({ createdAt: -1 });
 
     res.status(200).json({ rooms });
   } catch (err) {

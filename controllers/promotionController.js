@@ -9,7 +9,7 @@ const upload = multer();
 // Get all promotions (Admin)
 exports.getAllPromotions = async (req, res) => {
     try {
-        const promotions = await Promotion.find();
+        const promotions = await Promotion.find().sort({ createdAt: -1 });
       console.log(" API Response:", promotions); // Log dữ liệu để kiểm tra
 
         res.status(200).json(promotions);
@@ -43,7 +43,7 @@ exports.getPagePromotion = async (req, res, next) => {
       dateStart: { $gte: new Date() },
       dateEnd: { $gte: new Date() },
       isDelete: false
-    });
+    }).sort({ createdAt: -1 });
     console.log(" API Response:", promotions); // Log dữ liệu để kiểm tra
 
     res.status(200).json(promotions);
@@ -222,7 +222,7 @@ exports.updatePromotion = async (req, res, next) => {
 exports.deletePromotion = async (req, res) => {
     try {
         const { id } = req.params;
-        await Promotion.findByIdAndUpdate(id, { isDelete: true });
+        await Promotion.findByIdAndUpdate(id, req.body);
         res.status(200).json({ message: "Promotion deleted successfully" });
     } catch (error) {
         res.status(400).json({ message: "Error deleting promotion" });

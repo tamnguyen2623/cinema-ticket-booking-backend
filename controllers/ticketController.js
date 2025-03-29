@@ -27,7 +27,7 @@ exports.createTicketPrice = async (req, res) => {
 
 exports.getAllTicketPrices = async (req, res) => {
   try {
-    const ticketPrices = await TicketPrice.find();
+    const ticketPrices = await TicketPrice.find().sort({ createdAt: -1 });
     res.status(200).json({ ticketPrices });
   } catch (err) {
     console.error(err);
@@ -59,7 +59,7 @@ exports.updateTicketPrice = async (req, res) => {
       { new: true }
     );
 
-    if (!updatedTicketPrice || updatedTicketPrice.isDelete) {
+    if (!updatedTicketPrice) {
       return res.status(404).json({ message: "Ticket price not found" });
     }
 
