@@ -52,6 +52,12 @@ class SeatAvailableController {
       .then(() => res.status(200).json({ updatedSeats: seatIds }))
       .catch((error) => res.status(500).json({ message: error.message }));
   }
+
+  delete(req, res, next) {
+    SeatAvailable.deleteMany({ movieShowingId: req.params.movieShowingId })
+        .then(() => res.status(200).json({ message: `All seats with movieShowingId ${req.params.movieShowingId} have been deleted.` }))
+        .catch((error) => res.status(500).json({ message: error.message }));
+    }
 }
 
 module.exports = new SeatAvailableController();
