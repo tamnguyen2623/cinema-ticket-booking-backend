@@ -59,6 +59,7 @@ router.get(
 
 
 router.post("/googlelogin", googleLogin);
+
 router.get("/google/register", passport.authenticate("google-register", { scope: ["profile", "email"] }));
 router.get(
   "/google/register/callback",
