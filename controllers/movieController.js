@@ -297,6 +297,7 @@ exports.getNowShowingMovies = async (req, res) => {
 
     const movies = await Movie.find({
       // isDeleted: false,
+
       releaseDate: { $lt: now } // Chỉ lấy phim có ngày phát hành lớn hơn hôm nay
     }).populate("movieType");
     res.status(200).json({
