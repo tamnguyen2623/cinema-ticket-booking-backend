@@ -17,7 +17,7 @@ class bannerController {
   // List of banners
   async getAll(req, res, next) {
     try {
-      const banners = await Banner.find();
+      const banners = await Banner.find().sort({ createdAt: -1 });;
       res.status(200).json(banners);
     } catch (error) {
       res.status(500).json({ message: error.message });
