@@ -32,6 +32,7 @@ router.post("/verifyotpregister", verifyOtpRegister);
 router.post("/resendotp", resendOtp);
 router.post("/login", login);
 router.get("/logout", logout);
+
 router.get("/me", protect, getMe);
 router.put("/profile/user/:id", protect, updateProfile);
 
@@ -59,6 +60,7 @@ router.get(
 
 
 router.post("/googlelogin", googleLogin);
+
 router.get("/google/register", passport.authenticate("google-register", { scope: ["profile", "email"] }));
 router.get(
   "/google/register/callback",

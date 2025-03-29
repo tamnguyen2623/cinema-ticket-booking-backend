@@ -35,7 +35,11 @@ const revenue = require("./routes/revenue");
 const user = require("./routes/user");
 const egift = require("./routes/egift");
 const support = require("./routes/support");
+const promotion = require("./routes/promotion")
+
 const banner = require("./routes/banner");
+const service = require("./routes/service");
+const favoriteMovie = require("./routes/favorite")
 
 mongoose.set("strictQuery", false);
 mongoose
@@ -123,9 +127,11 @@ app.use("/feedback", feedback);
 app.use("/revenue", revenue);
 app.use("/user", user);
 app.use("/egift", egift);
+app.use("/favorite", favoriteMovie);
 app.use("/support", support);
+app.use("/promotion", promotion);
 app.use("/banner", banner);
-
+app.use("/service", service);
 app.use(passport.initialize());
 const port = process.env.PORT || 8080;
 

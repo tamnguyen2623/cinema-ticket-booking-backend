@@ -104,19 +104,17 @@ exports.callBackVnPay = async (req, res, next) => {
               <tr><td><strong>Rạp số:</strong></td><td>${theaterName}</td></tr>
               <tr><td><strong>Ngày chiếu:</strong></td><td>${showtimeDate}</td></tr>
               <tr><td><strong>Ghế:</strong></td><td>${seats}</td></tr>
-              <tr><td><strong>Giá vé:</strong></td><td>${
-                order.price
-              } VND</td></tr>
+              <tr><td><strong>Giá vé:</strong></td><td>${order.price
+          } VND</td></tr>
             </table>
             <p style="margin-top: 20px;">See more detail and QR code of ticket at:</p>
             <div style="text-align: center;">
               <a class="btn-primary"
                                            style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 20px; color: #FFF; text-decoration: none; line-height: 2em; font-weight: bold; text-align: center; cursor: pointer; display: inline-block; border-radius: 7px; text-transform: capitalize; background-color: #f1556c; margin: 0; border-color: #f1556c; border-style: solid; border-width: 10px 20px;
           padding: 10px 20px;"
-                                           href="${
-                                             process.env.FRONTEND_PREFIX +
-                                             "/ticket"
-                                           }">
+                                           href="${process.env.FRONTEND_PREFIX +
+          "/ticket"
+          }">
                                             Detail</a>
             </div>
             
@@ -595,11 +593,11 @@ exports.getTotalRevenueByMovie = async (req, res, next) => {
         totalRevenue: { $sum: "$price" },
       },
     },
-    { $sort: { totalRevenue: -1 } }, 
+    { $sort: { totalRevenue: -1 } },
     {
       $project: {
         _id: 0,
-        movieName: "$_id", 
+        movieName: "$_id",
         totalRevenue: 1,
       },
     },
@@ -611,3 +609,296 @@ exports.getTotalRevenueByMovie = async (req, res, next) => {
   res.json({ categories, totalRevenue });
 };
 
+exports.exportTotalRevenueByCinema = async (req, res) => {
+  try {
+    const results = await Booking.aggregate([
+      {
+        $match: { status: "success" } // Chỉ lấy các booking thành công
+      },
+      {
+        $group: {
+          _id: "$cinema", // Nhóm theo tên rạp
+          totalRevenue: { $sum: "$price" } // Tính tổng doanh thu
+        }
+      },
+      {
+        $lookup: {
+          from: "cinemas", // Truy vấn vào collection "cinemas"
+          let: { cinemaName: "$_id" }, // Lấy giá trị tên rạp từ Booking
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ["$name", "$$cinemaName"] }
+              } // So sánh với name của Cinema
+            },
+            {
+              $project: { name: 1, address: 1 } // Chỉ lấy trường cần thiết
+            }
+          ],
+          as: "cinemaDetails"
+        }
+      },
+      {
+        $unwind: "$cinemaDetails" // Giải nén dữ liệu từ cinemaDetails
+      },
+      {
+        $project: {
+          cinema: "$cinemaDetails.name", // Lấy tên rạp
+          address: "$cinemaDetails.address", // Lấy địa chỉ
+          totalRevenue: 1 // Giữ nguyên tổng doanh thu
+        }
+      }
+    ]);
+
+    // Tạo file Excel
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Total Revenue by Cinema");
+
+    // Định nghĩa cột
+    worksheet.columns = [
+      { header: "Cinema", key: "cinema", width: 30 },
+      { header: "Address", key: "address", width: 40 },
+      { header: "Total Revenue", key: "totalRevenue", width: 20 },
+    ];
+
+    // Thêm dữ liệu vào file Excel
+    results.forEach((data) => {
+      worksheet.addRow(data);
+    });
+
+    // Thiết lập headers để tải file Excel về
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=total_revenue_by_cinema.xlsx"
+    );
+
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (error) {
+    console.error("Error exporting total revenue:", error);
+    res.status(500).send("Failed to export total revenue");
+  }
+};
+
+exports.exportTotalRevenueByMovie = async (req, res) => {
+  try {
+    const results = await Booking.aggregate([
+      { $match: { status: "success" } },
+      { $group: { _id: "$movieName", totalRevenue: { $sum: "$price" } } },
+      { $sort: { totalRevenue: -1 } },
+      { $project: { movieName: "$_id", totalRevenue: 1 } },
+    ]);
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Total Revenue by Movie");
+
+    worksheet.columns = [
+      { header: "Movie Name", key: "movieName", width: 30 },
+      { header: "Total Revenue", key: "totalRevenue", width: 20 },
+    ];
+
+    results.forEach((data) => worksheet.addRow(data));
+
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.setHeader("Content-Disposition", "attachment; filename=total_revenue_by_movie.xlsx");
+
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (error) {
+    console.error("Error exporting total revenue by movie:", error);
+    res.status(500).send("Failed to export total revenue by movie");
+  }
+};
+
+exports.exportRevenueByDay = async (req, res) => {
+  try {
+    const month = req.query.month || new Date().getMonth() + 1;
+    const year = req.query.year || new Date().getFullYear();
+    const firstDay = new Date(year, month - 1, 1);
+    const lastDay = new Date(year, month, 0);
+
+    const revenueByDay = await Booking.aggregate([
+      { $match: { status: "success", paymentTime: { $gte: firstDay, $lte: lastDay } } },
+      { $group: { _id: { $dayOfMonth: "$paymentTime" }, totalRevenue: { $sum: "$price" } } },
+      { $sort: { _id: 1 } },
+    ]);
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Revenue by Day");
+
+    worksheet.columns = [
+      { header: "Day", key: "day", width: 10 },
+      { header: "Total Revenue", key: "totalRevenue", width: 20 },
+    ];
+
+    revenueByDay.forEach((data) => worksheet.addRow({ day: data._id, totalRevenue: data.totalRevenue }));
+
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.setHeader("Content-Disposition", "attachment; filename=revenue_by_day.xlsx");
+
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (error) {
+    console.error("Error exporting revenue by day:", error);
+    res.status(500).send("Failed to export revenue by day");
+  }
+};
+exports.exportTotalRevenueByMonth = async (req, res) => {
+  try {
+    let { year } = req.query;
+    if (!year) {
+      const currentYear = new Date().getFullYear();
+      year = currentYear;
+    }
+
+    const results = await Booking.aggregate([
+      { $match: { status: "success", createdAt: { $gte: new Date(`${year}-01-01T00:00:00.000Z`), $lt: new Date(`${year}-12-31T23:59:59.999Z`) } } },
+      { $group: { _id: { month: { $month: "$createdAt" } }, totalRevenue: { $sum: "$price" } } },
+      { $sort: { "_id.month": 1 } },
+      { $project: { month: "$_id.month", totalRevenue: 1 } },
+    ]);
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Total Revenue by Month");
+
+    worksheet.columns = [
+      { header: "Month", key: "month", width: 15 },
+      { header: "Total Revenue", key: "totalRevenue", width: 20 },
+    ];
+
+    results.forEach((data) => worksheet.addRow(data));
+
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.setHeader("Content-Disposition", "attachment; filename=total_revenue_by_month.xlsx");
+
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (error) {
+    console.error("Error exporting total revenue by month:", error);
+    res.status(500).send("Failed to export total revenue by month");
+  }
+};
+
+exports.exportTotalTicketsRevenueByTicket = async (req, res) => {
+  try {
+    const results = await Booking.aggregate([
+      { $match: { status: "success" } },
+      {
+        $group: {
+          _id: "$movieName",
+          totalRevenue: { $sum: "$price" },
+          totalTickets: { $sum: { $size: "$seats" } } // Đếm tổng số vé đã bán
+        }
+      },
+      { $sort: { totalRevenue: -1 } },
+      {
+        $project: {
+          movieName: "$_id",
+          totalRevenue: 1,
+          totalTickets: 1
+        }
+      }
+    ]);
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Total Tickets & Revenue by Movie");
+
+    worksheet.columns = [
+      { header: "Movie Name", key: "movieName", width: 30 },
+      { header: "Total Tickets Sold", key: "totalTickets", width: 20 },
+      { header: "Total Revenue", key: "totalRevenue", width: 20 },
+    ];
+
+    results.forEach((data) => worksheet.addRow(data));
+
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.setHeader("Content-Disposition", "attachment; filename=total_tickets_revenue_by_movie.xlsx");
+
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (error) {
+    console.error("Error exporting total tickets and revenue:", error);
+    res.status(500).send("Failed to export total tickets and revenue");
+  }
+};
+
+exports.exportTotalTicketsRevenue = async (req, res) => {
+  try {
+    const results = await Booking.aggregate([
+      { $match: { status: "success" } },
+      {
+        $lookup: {
+          from: "users",
+          localField: "user",
+          foreignField: "_id",
+          as: "userInfo"
+        }
+      },
+      {
+        $unwind: "$userInfo"
+      },
+      {
+        $group: {
+          _id: { movieName: "$movieName", cinema: "$cinema", date: "$date", showtime: "$showtime", fullname: "$userInfo.fullname", email: "$userInfo.email" },
+          totalRevenue: { $sum: "$price" },
+          totalTickets: { $sum: { $size: "$seats" } },
+          totalTransactions: { $sum: 1 },
+          seatsList: { $push: "$seats" },
+        },
+      },
+      {
+        $project: {
+          movieName: "$_id.movieName",
+          cinema: "$_id.cinema",
+          date: "$_id.date",
+          showtime: "$_id.showtime",
+          fullname: "$_id.fullname",
+          email: "$_id.email",
+          totalRevenue: 1,
+          totalTickets: 1,
+          totalTransactions: 1,
+          averagePrice: { $divide: ["$totalRevenue", "$totalTickets"] },
+          seats: { $reduce: { input: "$seatsList", initialValue: [], in: { $concatArrays: ["$$value", "$$this"] } } },
+        },
+      },
+      { $sort: { totalRevenue: -1 } },
+    ]);
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Tickets Revenue Report");
+
+    worksheet.columns = [
+      { header: "Customer Name", key: "fullname", width: 25 },
+      { header: "Customer Email", key: "email", width: 25 },
+      { header: "Movie Name", key: "movieName", width: 20 },
+      { header: "Cinema", key: "cinema", width: 20 },
+      { header: "Date", key: "date", width: 20 },
+      { header: "Showtime", key: "showtime", width: 20 },
+      { header: "Total Transactions", key: "totalTransactions", width: 20 },
+      { header: "Seats", key: "seats", width: 20 },
+      { header: "Total Tickets Sold", key: "totalTickets", width: 20 },
+      { header: "Average Price", key: "averagePrice", width: 20 },
+      { header: "Total Revenue", key: "totalRevenue", width: 20 },
+    ];
+
+    results.forEach((data) => {
+      worksheet.addRow({
+        ...data,
+        seats: data.seats.join(", "),
+      });
+    });
+
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.setHeader("Content-Disposition", "attachment; filename=tickets_revenue.xlsx");
+
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (error) {
+    console.error("Error exporting tickets revenue:", error);
+    res.status(500).send("Failed to export tickets revenue");
+  }
+};

@@ -455,7 +455,7 @@ const paymentWithMoMo = async (data) => {
 
     req1.write(requestBody);
     req1.end();
-})
+  })
 
 };
 
