@@ -1,5 +1,16 @@
 const Support = require("../models/Support");
 
+exports.getQuestionsForCustomer = async (req, res) => {
+  try {
+    const supports = await Support.find({ isDelete: false });
+    res.status(200).json({ success: true, data: supports });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ success: false, message: "Error fetching support list", error });
+  }
+};
+
 //Lấy tất cả câu hỏi chưa bị xóa
 exports.getAllSupports = async (req, res) => {
   try {
