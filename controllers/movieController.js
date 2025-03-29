@@ -179,13 +179,14 @@ exports.createMovie = async (req, res, next) => {
         description: req.body.description,
         movieType: req.body.movieType,
         actor: req.body.actor,
-        releaseDate: req.body.parsedDate, // Thêm ngày phát hành
+        releaseDate: parsedDate, // Thêm ngày phát hành
 
       };
       console.log("Request Headers:", req.headers);
       console.log("Request Body:", req.body);
       console.log("Uploaded Files:", req.files);
       console.log("Files to Upload:", filesToUpload);
+      console.log("Movie data", movieData);
 
 
       // Save the movie to the database
@@ -250,6 +251,7 @@ exports.updateMovie = async (req, res, next) => {
           : prevMovie.trailer,
         description: req.body.description,
         price: req.body.price,
+        actor: req.body.actor,
         releaseDate, // Thêm ngày phát hành
 
       };
@@ -296,7 +298,7 @@ exports.getNowShowingMovies = async (req, res) => {
     const now = new Date();
 
     const movies = await Movie.find({
-      // isDeleted: false,
+      isDeleted: false,
       releaseDate: { $lt: now } // Chỉ lấy phim có ngày phát hành lớn hơn hôm nay
     }).populate("movieType");
     res.status(200).json({
@@ -316,7 +318,7 @@ exports.getUpcomingMovies = async (req, res) => {
 
     // Lấy danh sách phim có lịch chiếu trong tương lai
     const movies = await Movie.find({
-      // isDeleted: false,
+      isDeleted: false,
       releaseDate: { $gt: now } // Chỉ lấy phim có ngày phát hành lớn hơn hôm nay
     }).populate("movieType");
 
