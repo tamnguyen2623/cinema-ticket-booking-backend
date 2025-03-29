@@ -186,6 +186,7 @@ exports.createMovie = async (req, res, next) => {
       console.log("Request Body:", req.body);
       console.log("Uploaded Files:", req.files);
       console.log("Files to Upload:", filesToUpload);
+      console.log("Movie data", movieData);
 
 
       // Save the movie to the database
@@ -250,6 +251,7 @@ exports.updateMovie = async (req, res, next) => {
           : prevMovie.trailer,
         description: req.body.description,
         price: req.body.price,
+        actor: req.body.actor,
         releaseDate, // Thêm ngày phát hành
 
       };
